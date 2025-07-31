@@ -19,9 +19,11 @@
   },
   "homepage": "https://github.com/Lordenko/ztu-rozklad-api#readme",
   "dependencies": {
-    "axios": "^1.11.0",
+    "axios-cookiejar-support": "^6.0.4",
     "cheerio": "^1.1.2",
-    "fastify": "^5.4.0"
+    "fastify": "^5.4.0",
+    "tough-cookie": "^5.1.2",
+    "undici": "^7.13.0"
   },
   "devDependencies": {
     "@types/node": "^24.1.0",

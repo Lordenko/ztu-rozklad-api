@@ -3,7 +3,7 @@ import Fastify from 'fastify'
 import GroupRoute from './routes/group.route'
 
 const fastify = Fastify({
-  logger: true
+  logger: false
 })
 
 fastify.register(GroupRoute)
