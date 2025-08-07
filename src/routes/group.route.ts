@@ -5,10 +5,10 @@ export default async function parserRoutes(fastify: FastifyInstance) {
   fastify.get('/group/:id', async (request, reply) => {
     const { id } = request.params as { id: number };
 
-    console.time("request+parse");
+    console.time("time");
     const result = await fetchGroup(id);
-    console.timeEnd("request+parse");
+    console.timeEnd("time");
 
-    return { html: result };
+    return { json: result };
   });
 }
