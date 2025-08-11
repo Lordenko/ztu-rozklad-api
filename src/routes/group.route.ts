@@ -1,7 +1,9 @@
 import { FastifyInstance } from 'fastify';
 import { fetchGroup } from '../services/group.service.js';
 
-export default async function parserRoutes(fastify: FastifyInstance) {
+export default async function group(fastify: FastifyInstance) {
+  console.log('Registering group route');
+
   fastify.get('/group/:id', async (request, reply) => {
     const { id } = request.params as { id: number };
 
@@ -9,6 +11,6 @@ export default async function parserRoutes(fastify: FastifyInstance) {
     const result = await fetchGroup(id);
     console.timeEnd("time");
 
-    return { json: result };
+    return result
   });
 }
