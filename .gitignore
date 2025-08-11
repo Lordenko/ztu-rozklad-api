@@ -1,6 +1,6 @@
 # Lordenko
 *.js
-data
+data/users
 
 # Logs
 logs
