@@ -1,34 +1,35 @@
 {
-  "name": "ztu-rozklad-api",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "tsc -p tsconfig.json && node ./src/main.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Lordenko/ztu-rozklad-api.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/Lordenko/ztu-rozklad-api/issues"
-  },
-  "homepage": "https://github.com/Lordenko/ztu-rozklad-api#readme",
-  "dependencies": {
-    "axios-cookiejar-support": "^6.0.4",
-    "cheerio": "^1.1.2",
-    "fastify": "^5.4.0",
-    "tough-cookie": "^5.1.2",
-    "undici": "^7.13.0"
-  },
-  "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^24.1.0",
-    "better-sqlite3": "^12.2.0",
-    "typescript": "^5.8.3"
-  }
+    "name": "ztu-rozklad-api",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start": "tsc -p tsconfig.json && node ./src/main.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Lordenko/ztu-rozklad-api.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "commonjs",
+    "bugs": {
+        "url": "https://github.com/Lordenko/ztu-rozklad-api/issues"
+    },
+    "homepage": "https://github.com/Lordenko/ztu-rozklad-api#readme",
+    "dependencies": {
+        "axios-cookiejar-support": "^6.0.4",
+        "cheerio": "^1.1.2",
+        "fastify": "^5.4.0",
+        "set-cookie-parser": "^2.7.1",
+        "tough-cookie": "^5.1.2",
+        "undici": "^7.13.0"
+    },
+    "devDependencies": {
+        "@types/better-sqlite3": "^7.6.13",
+        "@types/node": "^24.1.0",
+        "better-sqlite3": "^12.2.0",
+        "typescript": "^5.8.3"
+    }
 }

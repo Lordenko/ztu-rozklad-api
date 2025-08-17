@@ -1,22 +1,8 @@
-import { fetchRozklad }  from "../utils/fetchRozklad";
-import * as path from 'path'
-import * as fs from 'fs'
-import Database from 'better-sqlite3'
+import * as path from 'path';
+import * as fs from 'fs';
+import { DataBase } from '../utils/DataBase/DataBase';
 
-export async function insertData(name: string, password: string) {
-    const myPath = path.join(path.dirname(__filename), '..', '..', 'data')
-    fs.mkdirSync(myPath, { recursive: true })
-
-    const dbPath = path.join(myPath, 'database.sqlite')
-    const db = new Database(dbPath)
-
-    try {
-        const stmt = db.prepare('INSERT INTO users (name, password) VALUES (?, ?)');
-        const info = stmt.run(name, password);
-        return { id: info.lastInsertRowid, name, password };
-    } catch (err) {
-        console.log(
-            { error: 'User with this email already exists' }, err
-        );
-    }
+export async function insertData(type: string, name: string, password: string) {
+    const dataBase = new DataBase();
+    return dataBase.new(type, name, password);
 }
