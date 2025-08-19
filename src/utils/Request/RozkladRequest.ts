@@ -2,8 +2,7 @@ import { request, FormData } from 'undici';
 import { DataBase } from '../DataBase/DataBase';
 
 export class RozkladRequest {
-    private loginUrl: string =
-        'https://rozklad.ztu.edu.ua/schedule/users/login';
+    private loginUrl: string = 'https://rozklad.ztu.edu.ua/schedule/users/login';
 
     private attempts: number = 0;
     private allowAttempts: number = 2;

@@ -2,6 +2,8 @@ import { RozkladFetch } from '../utils/Fetch/RozkladFetch';
 import { RozkladRequest } from '../utils/Request/RozkladRequest';
 import { DataBase } from '../utils/DataBase/DataBase.js';
 
+import { CabinetRequest } from '../utils/Request/CabinetRequest';
+
 export async function fetchGroup(id: number, username: string | undefined) {
     let name: string = ''
 
@@ -29,6 +31,9 @@ export async function fetchGroup(id: number, username: string | undefined) {
     const rozkladFetch = new RozkladFetch();
     const rozkladJson = await rozkladFetch.fetch(rozkladData)
     console.timeEnd("fetch");
+
+    const cabinetRequest = new CabinetRequest()
+    await cabinetRequest.connectToken('login', 'password', 'token')
 
 
     return rozkladJson;
