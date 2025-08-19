@@ -1,5 +1,5 @@
-import { fetchRozklad } from '../utils/fetchRozklad';
-import { RozkladRequest } from '../utils/Requests/RozkladRequest';
+import { RozkladFetch } from '../utils/Fetch/RozkladFetch';
+import { RozkladRequest } from '../utils/Request/RozkladRequest';
 import { DataBase } from '../utils/DataBase/DataBase.js';
 
 export async function fetchGroup(id: number, username: string | undefined) {
@@ -20,8 +20,16 @@ export async function fetchGroup(id: number, username: string | undefined) {
         }
     }
 
+    console.time("request");
     const rozkladRequest = new RozkladRequest(name);
     const rozkladData = await rozkladRequest.request(id);
+    console.timeEnd("request");
 
-    return fetchRozklad(id, rozkladData);
+    console.time("fetch");
+    const rozkladFetch = new RozkladFetch();
+    const rozkladJson = await rozkladFetch.fetch(rozkladData)
+    console.timeEnd("fetch");
+
+
+    return rozkladJson;
 }

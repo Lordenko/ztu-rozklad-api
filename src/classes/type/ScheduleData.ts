@@ -1,1 +1,1 @@
-export type ScheduleData = { [key: string]: { [key: string]: any[] } };
+export type ScheduleData = { [key: string]: { [key: string]: { [key: string]: any[] } } };

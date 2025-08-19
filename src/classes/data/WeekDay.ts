@@ -1,13 +1,5 @@
 export class WeekDay {
-    numberDay: number
-    numberWeek: string
-
-    constructor(numberDay: number, numberWeek: string) {
-        this.numberDay = numberDay
-        this.numberWeek = numberWeek
-    }
-
-    stringName(): string {
+    stringName(number: number): string {
         const nameDay: { [key: number]: string } = {
             0: 'Понеділок',
             1: 'Вівторок',
@@ -18,6 +10,6 @@ export class WeekDay {
             6: 'Неділя'
         }
 
-        return `${nameDay[this.numberDay]} ${this.numberWeek}`.toString()
+        return `${nameDay[number]}`.toString()
     }
 }
