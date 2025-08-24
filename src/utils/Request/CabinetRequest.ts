@@ -18,12 +18,12 @@ export class CabinetRequest {
         this.db = new DataBase()
     }
 
-    async request(week?: number, day?: number): Promise<string> {
+    async request(url?: string): Promise<string> {
         const baseUrl = `https://cabinet.ztu.edu.ua/site/schedule`
-        const url = (week && day) ? `${baseUrl}?week=${week}&day=${day}` : baseUrl
+        const myurl = (url) ? url : baseUrl
         const { name, password, tokenCabinet } = this.db.getDataOfName(this.username)
 
-        return await this.connectToken(url, name, password, tokenCabinet);
+        return await this.connectToken(myurl, name, password, tokenCabinet);
     }
 
     private async connectToken(

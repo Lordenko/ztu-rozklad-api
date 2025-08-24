@@ -37,8 +37,8 @@ export async function fetchGroup(id: number, username: string | undefined) {
 
     const cabinetRequest = new CabinetRequest(name)
     const cabinetFetch = new CabinetFetch(cabinetRequest)
-    cabinetFetch.fetch()
+    const cabinetJson = cabinetFetch.fetch()
 
 
-    return rozkladJson;
+    return cabinetJson;
 }

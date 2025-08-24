@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 
-import { Validate } from '../../classes/data/Validate';
+import { RozkladValidate } from '../../classes/data/Validate/RozkladValidate';
 import { WeekDay } from '../../classes/data/WeekDay';
 import { ScheduleData } from '../../classes/type/ScheduleData';
 
@@ -83,7 +83,7 @@ export class RozkladFetch {
         const subgroup = this.getSubGroup(pair);
         const classes = this.getClasses(pair);
 
-        return new Validate(
+        return new RozkladValidate(
             ordinality,
             subject,
             teacher,
@@ -99,7 +99,7 @@ export class RozkladFetch {
         weekName: string,
         dayName: string,
         hour: string,
-        validate: Validate,
+        validate: RozkladValidate,
     ) {
         if (validate.checkIsValid()) {
             data[weekName] ??= {};
