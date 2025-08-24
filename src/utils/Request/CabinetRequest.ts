@@ -18,11 +18,12 @@ export class CabinetRequest {
         this.db = new DataBase()
     }
 
-    async request(week: number, day: number): Promise<string> {
-        const url = `https://cabinet.ztu.edu.ua/site/schedule?week=${week}&day=${day}`
-        const userData = this.db.getDataOfName(this.username)
+    async request(week?: number, day?: number): Promise<string> {
+        const baseUrl = `https://cabinet.ztu.edu.ua/site/schedule`
+        const url = (week && day) ? `${baseUrl}?week=${week}&day=${day}` : baseUrl
+        const { name, password, tokenCabinet } = this.db.getDataOfName(this.username)
 
-        return await this.connectToken(url, userData.name, userData.password, userData.tokenCabinet);
+        return await this.connectToken(url, name, password, tokenCabinet);
     }
 
     private async connectToken(
@@ -31,7 +32,6 @@ export class CabinetRequest {
         password: string,
         cookieValue?: string | null,
     ): Promise<string> {
-
         const cookieName = 'advanced-frontend'
         const cookie = `${cookieName}=${cookieValue};`
 

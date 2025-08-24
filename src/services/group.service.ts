@@ -1,9 +1,10 @@
 import { RozkladFetch } from '../utils/Fetch/RozkladFetch';
 import { RozkladRequest } from '../utils/Request/RozkladRequest';
-import { DataBase } from '../utils/DataBase/DataBase.js';
 
+import { CabinetFetch } from '../utils/Fetch/CabinetFetch';
 import { CabinetRequest } from '../utils/Request/CabinetRequest';
-import { fork } from 'child_process';
+
+import { DataBase } from '../utils/DataBase/DataBase.js';
 
 export async function fetchGroup(id: number, username: string | undefined) {
     let name: string = ''
@@ -34,14 +35,10 @@ export async function fetchGroup(id: number, username: string | undefined) {
     // console.log(rozkladJson);
     console.timeEnd("fetch");
 
-    console.time('for')
-    const cabinetRequest = new CabinetRequest('ipz235_shdr')
-    for (let i = 0; i <= 7; i++) {
-        await cabinetRequest.request(16, i)
-    }
-    console.timeEnd('for')
+    const cabinetRequest = new CabinetRequest(name)
+    const cabinetFetch = new CabinetFetch(cabinetRequest)
+    cabinetFetch.fetch()
 
-    // const temp = await cabinetRequest.request(16, 2)
 
     return rozkladJson;
 }
