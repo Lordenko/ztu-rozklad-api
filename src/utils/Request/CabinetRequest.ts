@@ -10,11 +10,59 @@ export class CabinetRequest {
     private attempts: number = 0;
     private allowAttempts: number = 2;
 
+    private username: string;
     private db: DataBase
 
-    constructor() {
+    constructor(username: string) {
+        this.username = username;
         this.db = new DataBase()
     }
+
+    async request(week: number, day: number): Promise<string> {
+        const url = `https://cabinet.ztu.edu.ua/site/schedule?week=${week}&day=${day}`
+        const userData = this.db.getDataOfName(this.username)
+
+        return await this.connectToken(url, userData.name, userData.password, userData.tokenCabinet);
+    }
+
+    private async connectToken(
+        url: string,
+        userName: string,
+        password: string,
+        cookieValue?: string | null,
+    ): Promise<string> {
+
+        const cookieName = 'advanced-frontend'
+        const cookie = `${cookieName}=${cookieValue};`
+
+        if (this.attempt()) {
+            const { statusCode, body } = await request(url, {
+                method: 'GET',
+                headers: {
+                    Cookie: cookie
+                }
+            });
+
+            const bodyText = await body.text()
+            if (this.checkSuccessfulConnect(statusCode, bodyText)) {
+                console.log(`Successful attempt to cabinet (${userName})`);
+                this.db.updateData(userName, cookieValue, undefined)
+
+                return await bodyText;
+            } else {
+                console.log(`Unsuccessful attempt to cabinet #${this.attempts} (${userName})`);
+                return this.connectPassword(userName, password)
+            }
+
+        } else {
+            const errorText = `Attempts to cabinet are over of auth to cabinet (${userName})`;
+            console.log(errorText);
+            return errorText;
+        }
+
+
+    }
+
 
     private async getCsrfToken(): Promise<CSRFType> {
 
@@ -32,6 +80,8 @@ export class CabinetRequest {
             "cookie": cookieValue
         }
     }
+
+
 
     private getFormData(
         username: string,
@@ -93,45 +143,8 @@ export class CabinetRequest {
         }
 
         return 'ти дебіл'
-
     }
 
-    async connectToken(
-        username: string,
-        password: string,
-        cookieValue: string
-    ): Promise<string> {
-
-        const cookieName = 'advanced-frontend'
-        const cookie = `${cookieName}=${cookieValue};`
-
-        if (this.attempt()) {
-            const { statusCode, body } = await request('https://cabinet.ztu.edu.ua/site/schedule', {
-                method: 'GET',
-                headers: {
-                    Cookie: cookie
-                }
-            });
-
-            const bodyText = await body.text()
-            if (this.checkSuccessfulConnect(statusCode, bodyText)) {
-                console.log(`Successful attempt to cabinet #${this.attempts} (${username})`);
-                this.db.updateData(username, cookieValue, undefined)
-
-                return await body.text();
-            } else {
-                console.log(`Unsuccessful attempt to cabinet #${this.attempts} (${username})`);
-                return this.connectPassword(username, password)
-            }
-
-        } else {
-            const errorText = `Attempts to cabinet are over of auth (${username})`;
-            console.log(errorText);
-            return errorText;
-        }
-
-
-    }
 
     private attempt(): boolean {
         if (this.attempts < this.allowAttempts) {
@@ -143,7 +156,10 @@ export class CabinetRequest {
     }
 
     private checkSuccessfulConnect(statusCode: number, bodyText: String) {
-        if (statusCode === 200 && bodyText.toLowerCase().includes('logout')) return true
+        if (statusCode === 200 && bodyText.toLowerCase().includes('logout')) {
+            this.attempts = 0;
+            return true;
+        }
         else return false
     }
 }

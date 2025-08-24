@@ -3,6 +3,7 @@ import { RozkladRequest } from '../utils/Request/RozkladRequest';
 import { DataBase } from '../utils/DataBase/DataBase.js';
 
 import { CabinetRequest } from '../utils/Request/CabinetRequest';
+import { fork } from 'child_process';
 
 export async function fetchGroup(id: number, username: string | undefined) {
     let name: string = ''
@@ -30,11 +31,17 @@ export async function fetchGroup(id: number, username: string | undefined) {
     console.time("fetch");
     const rozkladFetch = new RozkladFetch();
     const rozkladJson = await rozkladFetch.fetch(rozkladData)
+    // console.log(rozkladJson);
     console.timeEnd("fetch");
 
-    const cabinetRequest = new CabinetRequest()
-    await cabinetRequest.connectToken('login', 'password', 'token')
+    console.time('for')
+    const cabinetRequest = new CabinetRequest('ipz235_shdr')
+    for (let i = 0; i <= 7; i++) {
+        await cabinetRequest.request(16, i)
+    }
+    console.timeEnd('for')
 
+    // const temp = await cabinetRequest.request(16, 2)
 
     return rozkladJson;
 }

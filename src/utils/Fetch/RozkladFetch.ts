@@ -152,11 +152,11 @@ export class RozkladFetch {
                                 const $pair = $(pair);
 
                                 if ($pair.find('*').length > 0) {
-                                    if (pairs.length > 2 &&
-                                        !selectiveSubjects.includes(this.getSubject($pair))
-                                    ) {
-                                        return;
-                                    }
+                                    // if (pairs.length > 2 &&
+                                    //     !selectiveSubjects.includes(this.getSubject($pair))
+                                    // ) {
+                                    //     return;
+                                    // }
 
                                     if (pair) {
                                         const dayName = weekDay.stringName(tdKey)

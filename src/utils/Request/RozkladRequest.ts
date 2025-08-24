@@ -10,12 +10,16 @@ export class RozkladRequest {
     private username: string;
     private db: DataBase
 
-    constructor(username: string) {
+    constructor(
+        username: string
+    ) {
         this.username = username;
         this.db = new DataBase()
     }
 
-    public async request(id: number): Promise<string> {
+    public async request(
+        id: number
+    ): Promise<string> {
         const url = `https://rozklad.ztu.edu.ua/schedule/group?id=${id}`;
         const userData = this.db.getDataOfName(this.username)
 
@@ -40,10 +44,10 @@ export class RozkladRequest {
             });
 
             if (statusCode > 299 && statusCode < 400) {
-                console.log(`Unsuccessful attempt #${this.attempts} (${userName})`);
+                console.log(`Unsuccessful attempt to rozklad #${this.attempts} (${userName})`);
                 return await this.connectPassword(userName, password, url);
             } else {
-                console.log(`Successful attempt #${this.attempts} (${userName})`);
+                console.log(`Successful attempt to rozklad #${this.attempts} (${userName})`);
                 this.db.updateData(userName, undefined, tokenValue)
                 return body.text();
             }
@@ -100,7 +104,10 @@ export class RozkladRequest {
         }
     }
 
-    private getFormData(username: string, password: string): FormData {
+    private getFormData(
+        username: string,
+        password: string
+    ): FormData {
         const formData = new FormData();
         formData.append('login', username);
         formData.append('password', password);
