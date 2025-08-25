@@ -25,7 +25,9 @@ export class RozkladFetch {
         pair.find('.room')
             .find('a')
             .each((_: number, room: any) => {
-                rooms.push($(room).text().trim());
+                room = $(room).text().trim()
+                room = (String(room).includes('Дист')) ? 'Дистанційно' : room
+                rooms.push(room);
             });
 
         return rooms;
@@ -116,7 +118,7 @@ export class RozkladFetch {
         }
     }
 
-    public async fetch(html: string): Promise<any> {
+    public async fetch(html: string): Promise<ScheduleData> {
         const $ = cheerio.load(html);
 
         const data: ScheduleData = {};
@@ -180,9 +182,7 @@ export class RozkladFetch {
                 });
         });
 
-        return {
-            json: data,
-        };
+        return data;
     }
 
 

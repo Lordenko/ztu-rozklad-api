@@ -7,7 +7,6 @@ export default async function group(fastify: FastifyInstance) {
         const { username } = request.query as { username?: string | undefined };
 
         const result = await fetchGroup(id, username);
-        console.log(result);
 
         return result;
     });

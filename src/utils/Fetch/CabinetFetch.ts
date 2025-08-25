@@ -12,13 +12,10 @@ export class CabinetFetch {
         this.cabinetRequest = cabinetRequest
     }
 
-    async fetch() {
+    async fetch(): Promise<ScheduleData> {
         const data: ScheduleData = {}
-        // const actualWeekNumber: number = await this.getActualWeekNumber();
-        const actualWeekNumber: number = 15;
+        const actualWeekNumber: number = await this.getActualWeekNumber();
         const urls: Array<string> = this.getUrls(actualWeekNumber);
-        console.log(urls);
-
 
         for (const url of urls) {
             const html = await this.cabinetRequest.request(url)
@@ -58,10 +55,11 @@ export class CabinetFetch {
         }
     }
 
-    private getDescription($: any, pair: any): string {
-        const div = $(pair).find('div')[6];
-        const text = $(div).text();
-        return text.replace(/\s+/g, ' ').trim(); // замінює всі послідовності пробілів/нових рядків на один пробіл
+    private getDescription($: any, pair: any): string | undefined {
+        const div = $(pair).find('div')[8];
+        let text: string = $(div).text();
+        text = text.replace(/\s+/g, ' ').trim()
+        return (text.includes('Викладач ще не надав інформацію')) ? undefined : text;
     }
 
 
@@ -79,6 +77,7 @@ export class CabinetFetch {
         return roomsText
             .split(' / ')
             .map((room: string) => room.replace(/\s+/g, ' ').trim())
+            .map((room: string) => (room.includes('Дист') ? room = 'Дистанційно' : room = room))
             .filter(Boolean);
     }
 
