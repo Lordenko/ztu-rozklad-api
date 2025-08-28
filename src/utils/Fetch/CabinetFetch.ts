@@ -3,7 +3,6 @@ import { CabinetValidate } from "../../classes/data/Validate/CabinetValidate";
 import { ScheduleData } from "../../classes/type/ScheduleData";
 
 import * as cheerio from 'cheerio';
-import { val } from "cheerio/dist/commonjs/api/attributes";
 
 export class CabinetFetch {
     private cabinetRequest: CabinetRequest

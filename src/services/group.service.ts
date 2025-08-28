@@ -61,7 +61,6 @@ function getResultJson(rozkladJson: ScheduleData, cabinetJson: ScheduleData) {
                             }
                         })
                     }
-
                 })
             })
         })
