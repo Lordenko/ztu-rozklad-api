@@ -118,11 +118,11 @@ export class RozkladFetch {
         }
     }
 
-    public async fetch(html: string): Promise<ScheduleData> {
+    public async fetch(html: string): Promise<{ [key: string]: any }> {
         const $ = cheerio.load(html);
 
         const data: ScheduleData = {};
-        const selectiveSubjects: any[] = [];
+        const selectiveDays: any[] = [];
 
         const weekDay = new WeekDay()
 
@@ -154,14 +154,16 @@ export class RozkladFetch {
                                 const $pair = $(pair);
 
                                 if ($pair.find('*').length > 0) {
-                                    // if (pairs.length > 2 &&
-                                    //     !selectiveSubjects.includes(this.getSubject($pair))
-                                    // ) {
-                                    //     return;
-                                    // }
+                                    const dayName = weekDay.stringName(tdKey)
+
+                                    if (pairs.length > 2) {
+                                        const dayText = `${weekName} ${dayName}`
+                                        if (!selectiveDays.includes(dayName)) {
+                                            selectiveDays.push(dayText)
+                                        }
+                                    }
 
                                     if (pair) {
-                                        const dayName = weekDay.stringName(tdKey)
                                         const validate = this.createValadate(
                                             $,
                                             $pair,
@@ -182,7 +184,10 @@ export class RozkladFetch {
                 });
         });
 
-        return data;
+        return {
+            'data': data,
+            'selectiveDays': selectiveDays
+        }
     }
 
 

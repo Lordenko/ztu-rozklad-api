@@ -30,7 +30,9 @@ export async function fetchGroup(id: number, username: string | undefined) {
     const rozkladRequest = new RozkladRequest(name);
     const rozkladData = await rozkladRequest.request(id);
     const rozkladFetch = new RozkladFetch();
-    const rozkladJson = await rozkladFetch.fetch(rozkladData)
+    const rozkladDataJson = await rozkladFetch.fetch(rozkladData)
+    const rozkladJson = rozkladDataJson.data
+    const selectiveDays = rozkladDataJson.selectiveDays
 
     if (username !== undefined) {
         const cabinetRequest = new CabinetRequest(name)
@@ -39,11 +41,16 @@ export async function fetchGroup(id: number, username: string | undefined) {
         console.time('resultjson')
         const resultJson = getResultJson(rozkladJson, cabinetJson)
         console.timeEnd('resultjson')
-        return resultJson;
+        return {
+            'data': resultJson,
+            'selectiveDays': selectiveDays
+        }
     } else {
-        return rozkladJson;
+        return {
+            'data': rozkladJson,
+            'selectiveDays': selectiveDays
+        }
     }
-
 }
 
 function getResultJson(rozkladJson: ScheduleData, cabinetJson: ScheduleData) {
