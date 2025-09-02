@@ -1,8 +1,8 @@
 import { request, FormData } from 'undici';
-import { DataBase } from '../DataBase/DataBase';
 import * as cheerio from 'cheerio';
 
 import { CSRFType } from '../../classes/data/csrf';
+import { User } from '../../models/User';
 
 export class CabinetRequest {
     private loginUrl: string = 'https://cabinet.ztu.edu.ua/site/login';
@@ -11,16 +11,17 @@ export class CabinetRequest {
     private allowAttempts: number = 2;
 
     private username: string;
-    private db: DataBase
+    private db: User
 
     constructor(username: string) {
         this.username = username;
-        this.db = new DataBase()
+        this.db = new User()
     }
 
     async request(url?: string): Promise<string> {
         const baseUrl = `https://cabinet.ztu.edu.ua/site/schedule`
         const myurl = (url) ? url : baseUrl
+
         const { name, password, tokenCabinet } = this.db.getDataOfName(this.username)
 
         return await this.connectToken(myurl, name, password, tokenCabinet);
@@ -32,14 +33,12 @@ export class CabinetRequest {
         password: string,
         cookieValue?: string | null,
     ): Promise<string> {
-        const cookieName = 'advanced-frontend'
-        const cookie = `${cookieName}=${cookieValue};`
 
         if (this.attempt()) {
             const { statusCode, body } = await request(url, {
                 method: 'GET',
                 headers: {
-                    Cookie: cookie
+                    Cookie: cookieValue ? cookieValue : ''
                 }
             });
 
@@ -51,7 +50,7 @@ export class CabinetRequest {
                 return await bodyText;
             } else {
                 console.log(`Unsuccessful attempt to cabinet #${this.attempts} (${userName})`);
-                return this.connectPassword(userName, password)
+                return this.connectPassword(url, userName, password)
             }
 
         } else {
@@ -61,6 +60,43 @@ export class CabinetRequest {
         }
 
 
+    }
+
+    private async connectPassword(
+        url: string,
+        username: string,
+        password: string,
+    ): Promise<string> {
+
+        const csrf = await this.getCsrfToken()
+        if (csrf['token'] && csrf['cookie']) {
+
+            const formData = this.getFormData(username, password, csrf['token']);
+
+            const response = await request(this.loginUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    Cookie: csrf['cookie']
+                }
+            });
+
+            const rawCookies: string | string[] | undefined = response.headers['set-cookie'];
+            const cookieValue = this.getCookie(rawCookies);
+
+            if (cookieValue) {
+                return await this.connectToken(
+                    url,
+                    username,
+                    password,
+                    cookieValue,
+                );
+            }
+
+            return '1';
+        }
+
+        return 'ти дебіл'
     }
 
 
@@ -80,8 +116,6 @@ export class CabinetRequest {
             "cookie": cookieValue
         }
     }
-
-
 
     private getFormData(
         username: string,
@@ -108,43 +142,6 @@ export class CabinetRequest {
             return cookie.trim()
         }
     }
-
-
-    private async connectPassword(
-        username: string,
-        password: string,
-    ): Promise<string> {
-
-        const csrf = await this.getCsrfToken()
-        if (csrf['token'] && csrf['cookie']) {
-
-            const formData = this.getFormData(username, password, csrf['token']);
-
-            const response = await request(this.loginUrl, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    Cookie: csrf['cookie']
-                }
-            });
-
-            const rawCookies: string | string[] | undefined = response.headers['set-cookie'];
-            const cookieValue = this.getCookie(rawCookies);
-
-            if (cookieValue) {
-                return await this.connectToken(
-                    username,
-                    password,
-                    cookieValue,
-                );
-            }
-
-            return '1';
-        }
-
-        return 'ти дебіл'
-    }
-
 
     private attempt(): boolean {
         if (this.attempts < this.allowAttempts) {

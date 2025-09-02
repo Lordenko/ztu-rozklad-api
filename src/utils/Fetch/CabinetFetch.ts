@@ -95,7 +95,7 @@ export class CabinetFetch {
 
     private getWeekName($: any): string {
         const weekTagNumber = $('.active>a').first().text().trim()
-        const weekNumber = weekTagNumber === 0 ? weekTagNumber : ($('.active>a').first().text().trim() % 2) + 1
+        const weekNumber = weekTagNumber == 0 ? weekTagNumber : ($('.active>a').first().text().trim() % 2) + 1
         return `Тиждень ${weekNumber}`
     }
 

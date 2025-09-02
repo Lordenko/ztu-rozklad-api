@@ -1,12 +1,11 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { DataBase } from '../utils/DataBase/DataBase';
+import { User } from '../models/User';
 
 export async function updData(
     name: string,
     tokenCabinet?: string | null,
     tokenRozklad?: string | null,
 ) {
-    const dataBase = new DataBase();
-    return dataBase.updateData(name, tokenCabinet, tokenRozklad);
+    return new User().updateData(name, tokenCabinet, tokenRozklad);
 }

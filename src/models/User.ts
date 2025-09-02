@@ -1,23 +1,10 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import Database from 'better-sqlite3';
-import { DBUser } from '../../classes/type/DBUser';
-import { timeLog } from 'console';
 
-export class DataBase {
-    private name: string = 'database';
-    private db: import('better-sqlite3').Database;
+import { DataBase } from './Base/DataBase';
+import { DBUser } from '../classes/type/DBUser';
 
-    constructor() {
-        const myPath = path.join(path.dirname(__filename), '..', '..', 'data');
-        const dbPath = path.join(myPath, `${this.name}.sqlite`);
-
-        fs.mkdirSync(myPath, { recursive: true });
-        this.db = new Database(dbPath);
-    }
-
-    public getUserData() { }
-
+export class User extends DataBase {
     public checkSuperUser() {
         const stmt =
             (this.db
@@ -30,23 +17,6 @@ export class DataBase {
         } else {
             // console.log(stmt);
         }
-    }
-
-    public create() {
-        this.db
-            .prepare(
-                `
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                type TEXT NOT NULL,
-                name TEXT NOT NULL UNIQUE,
-                password TEXT NOT NULL,
-                tokenRozklad TEXT,
-                tokenCabinet TEXT
-            )
-        `,
-            )
-            .run();
     }
 
     public updateData(

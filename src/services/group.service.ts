@@ -4,74 +4,81 @@ import { RozkladRequest } from '../utils/Request/RozkladRequest';
 import { CabinetFetch } from '../utils/Fetch/CabinetFetch';
 import { CabinetRequest } from '../utils/Request/CabinetRequest';
 
-import { DataBase } from '../utils/DataBase/DataBase.js';
+import { User } from '../models/User';
+import { Cache } from '../models/Cache';
 
 import { ScheduleData } from '../classes/type/ScheduleData';
 import { Lesson } from '../classes/type/ScheduleData';
 
-export async function fetchGroup(id: number, username: string | undefined) {
-    let name: string = ''
+export async function fetchGroup(id: number, username?: string) {
+    const name = username ?? new User().getNameOfSuperUser();
+    if (!name) return { message: 'SuperUser is corrupted or does not exist!' };
 
-    if (username) {
-        name = username
-    } else {
-        const dataBase = new DataBase()
-        const nameOfSuperUser = dataBase.getNameOfSuperUser();
+    const status = username ? 'super' : 'common'
 
-        if (nameOfSuperUser) {
-            name = nameOfSuperUser;
-        } else {
-            return {
-                'message': 'SuperUser is corrupted or not exist!'
-            }
-        }
-    }
+    const cacheModel = new Cache()
+    const cacheData = cacheModel.getDataByGroup(id, status)
+    if (cacheData) return cacheData
 
     const rozkladRequest = new RozkladRequest(name);
     const rozkladData = await rozkladRequest.request(id);
-    const rozkladFetch = new RozkladFetch();
-    const rozkladDataJson = await rozkladFetch.fetch(rozkladData)
-    const rozkladJson = rozkladDataJson.data
-    const selectiveDays = rozkladDataJson.selectiveDays
 
-    if (username !== undefined) {
-        const cabinetRequest = new CabinetRequest(name)
-        const cabinetFetch = new CabinetFetch(cabinetRequest)
-        const cabinetJson = await cabinetFetch.fetch()
-        console.time('resultjson')
-        const resultJson = getResultJson(rozkladJson, cabinetJson)
-        console.timeEnd('resultjson')
-        return {
-            'data': resultJson,
-            'selectiveDays': selectiveDays
-        }
-    } else {
-        return {
-            'data': rozkladJson,
-            'selectiveDays': selectiveDays
-        }
+    const rozkladFetch = new RozkladFetch();
+    const { data: rozkladJson, selectiveDays } = await rozkladFetch.fetch(rozkladData);
+
+    if (!username) {
+        const data = { data: rozkladJson, selectiveDays }
+        cacheModel.insert(id, data, status)
+        return data;
     }
+
+    const cabinetRequest = new CabinetRequest(name);
+    const cabinetFetch = new CabinetFetch(cabinetRequest);
+    const cabinetJson = await cabinetFetch.fetch();
+
+    const resultJson = getResultJson(rozkladJson, cabinetJson);
+
+    const data = { data: resultJson, selectiveDays };
+    cacheModel.insert(id, data, status)
+    return data;
 }
+
 
 function getResultJson(rozkladJson: ScheduleData, cabinetJson: ScheduleData) {
     Object.entries(cabinetJson).forEach(([week, weekData]) => {
+        if (!rozkladJson[week]) {
+            // console.warn(`Пропущено тиждень ${week} - немає в розкладі`);
+            return;
+        }
+
         Object.entries(weekData).forEach(([day, dayData]) => {
+            if (!rozkladJson[week][day]) {
+                // console.warn(`Пропущено день ${day} у тижні ${week} - немає в розкладі`);
+                return;
+            }
+
             Object.entries(dayData).forEach(([hour, hourData]) => {
-                hourData.forEach((lesson: Lesson, index: number) => {
-                    const hourDataRozklad = rozkladJson[week][day][hour]
-                    if (hourDataRozklad) {
-                        hourDataRozklad.forEach((rozkladLesson: Lesson, rozkladLessonIndex: number) => {
-                            if (rozkladLesson.subject === lesson.subject &&
-                                JSON.stringify(rozkladLesson.teacher) === JSON.stringify(lesson.teacher) &&
-                                JSON.stringify(rozkladLesson.room) === JSON.stringify(lesson.room)) {
-                                rozkladJson[week][day][hour][rozkladLessonIndex].description = lesson.description
-                            }
-                        })
-                    }
-                })
-            })
-        })
-    })
+                if (!rozkladJson[week][day][hour]) {
+                    // console.warn(`Пропущено годину ${hour} у ${day}, тиждень ${week} - немає в розкладі`);
+                    return;
+                }
+
+                hourData.forEach((lesson: Lesson) => {
+                    const hourDataRozklad = rozkladJson[week][day][hour];
+
+                    hourDataRozklad.forEach((rozkladLesson: Lesson, rozkladLessonIndex: number) => {
+                        if (
+                            rozkladLesson.subject === lesson.subject &&
+                            JSON.stringify(rozkladLesson.teacher) === JSON.stringify(lesson.teacher) &&
+                            JSON.stringify(rozkladLesson.room) === JSON.stringify(lesson.room)
+                        ) {
+                            rozkladJson[week][day][hour][rozkladLessonIndex].description = lesson.description;
+                        }
+                    });
+                });
+            });
+        });
+    });
 
     return rozkladJson;
 }

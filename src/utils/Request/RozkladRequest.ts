@@ -1,5 +1,5 @@
 import { request, FormData } from 'undici';
-import { DataBase } from '../DataBase/DataBase';
+import { User } from '../../models/User';
 
 export class RozkladRequest {
     private loginUrl: string = 'https://rozklad.ztu.edu.ua/schedule/users/login';
@@ -8,13 +8,13 @@ export class RozkladRequest {
     private allowAttempts: number = 2;
 
     private username: string;
-    private db: DataBase
+    private db: User
 
     constructor(
         username: string
     ) {
         this.username = username;
-        this.db = new DataBase()
+        this.db = new User()
     }
 
     public async request(
@@ -47,7 +47,7 @@ export class RozkladRequest {
                 console.log(`Unsuccessful attempt to rozklad #${this.attempts} (${userName})`);
                 return await this.connectPassword(userName, password, url);
             } else {
-                console.log(`Successful attempt to rozklad #${this.attempts} (${userName})`);
+                console.log(`Successful attempt to rozklad (${userName})`);
                 this.db.updateData(userName, undefined, tokenValue)
                 return body.text();
             }

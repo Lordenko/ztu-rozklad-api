@@ -5,16 +5,16 @@ import NewUserRoute from './routes/newUser.route';
 import UpdUserRoute from './routes/updUser.route';
 import groupIdRoute from './routes/groupId.route';
 
-import { DataBase } from './utils/DataBase/DataBase';
+import { DataBase } from './models/Base/DataBase';
+import { User } from './models/User';
 import { GroupIdFetch } from './utils/Fetch/GroupIdFetch';
 
 const fastify = Fastify({
     logger: false,
 });
 
-const dataBase = new DataBase();
-dataBase.create();
-dataBase.checkSuperUser();
+new DataBase().createTables()
+new User().checkSuperUser()
 
 fastify.register(NewUserRoute);
 fastify.register(GroupRoute);
