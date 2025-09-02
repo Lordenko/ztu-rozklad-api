@@ -9,8 +9,6 @@ export async function getGroupId(name: string) {
     const groupIdFetch = new GroupIdFetch()
     const groupId = await groupIdFetch.fetch(html, name)
 
-    console.log(groupId);
-
     if (groupId) return { status: 200, groupId: groupId }
     else return { status: 400, description: 'Group do not found' }
 

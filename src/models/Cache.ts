@@ -19,8 +19,8 @@ export class Cache extends DataBase {
     public getDataByGroup(group: number, status: "common" | "super") {
         if (!this.checkExistByGroup(group) && !this.checkTimeExpiredByGroup(group)) return undefined
 
-        const groupDataStatus: string | undefined = this.checkStatusByGroup(group)
-        if (!groupDataStatus && status === 'super' && groupDataStatus === 'common') return undefined
+        const groupDataStatus: string | undefined = this.getStatusByGroup(group)
+        if (groupDataStatus && status === 'super' && groupDataStatus === 'common') return undefined
 
         const stmt = this.db.prepare(
             'SELECT data, selectiveDays  FROM cache WHERE "group" = ?',
@@ -29,7 +29,7 @@ export class Cache extends DataBase {
         return stmt ? { 'data': JSON.parse(stmt.data), 'selectiveDays': JSON.parse(stmt.selectiveDays) } : undefined
     }
 
-    private checkStatusByGroup(group: number): string | undefined {
+    private getStatusByGroup(group: number): string | undefined {
         const stmt = this.db.prepare(
             'SELECT status FROM cache WHERE "group" = ?',
         ).get(group) as { 'status': string };
