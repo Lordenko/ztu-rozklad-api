@@ -1,7 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import Database from 'better-sqlite3';
-import { DBUser } from '../../classes/type/DBUser';
 
 export class DataBase {
     protected db: import('better-sqlite3').Database;

@@ -4,7 +4,8 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "start": "tsc -p tsconfig.json && node ./src/main.js"
+        "start": "tsc -p tsconfig.json && node ./src/main.js",
+        "clear-table": "ts-node ./scripts/clearCache.ts"
     },
     "repository": {
         "type": "git",
@@ -28,8 +29,9 @@
     },
     "devDependencies": {
         "@types/better-sqlite3": "^7.6.13",
-        "@types/node": "^24.1.0",
+        "@types/node": "^24.3.0",
         "better-sqlite3": "^12.2.0",
-        "typescript": "^5.8.3"
+        "ts-node": "^10.9.2",
+        "typescript": "^5.9.2"
     }
 }
