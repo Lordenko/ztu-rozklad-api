@@ -21,7 +21,7 @@ export class RozkladRequest {
         id: number
     ): Promise<string> {
         const url = `https://rozklad.ztu.edu.ua/schedule/group?id=${id}`;
-        const userData = this.db.getDataOfName(this.username)
+        const userData = this.db.getDataOfNameSuperUser(this.username)
 
         return await this.connectToken(url, userData.name, userData.password, userData.tokenRozklad);
     }

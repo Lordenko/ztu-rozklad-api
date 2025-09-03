@@ -22,7 +22,7 @@ export class CabinetRequest {
         const baseUrl = `https://cabinet.ztu.edu.ua/site/schedule`
         const myurl = (url) ? url : baseUrl
 
-        const { name, password, tokenCabinet } = this.db.getDataOfName(this.username)
+        const { name, password, tokenCabinet } = this.db.getDataOfNameUser(this.username)
 
         return await this.connectToken(myurl, name, password, tokenCabinet);
     }

@@ -157,7 +157,7 @@ export class RozkladFetch {
                                     const dayName = weekDay.stringName(tdKey)
 
                                     if (pairs.length > 2) {
-                                        const dayText = `${weekName} ${dayName}`
+                                        const dayText = `${weekName}, ${dayName}`
                                         if (!selectiveDays.includes(dayName)) {
                                             selectiveDays.push(dayText)
                                         }

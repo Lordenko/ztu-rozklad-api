@@ -50,24 +50,23 @@ export class User extends DataBase {
         }
     }
 
-    public new(type: string, name: string, password: string): object {
+    public new(type: string, name: string, password: string): boolean {
         try {
-            const stmt = this.db.prepare(
-                'INSERT INTO users (type, name, password) VALUES (?, ?, ?)',
-            );
-            const info = stmt.run(type, name, password);
+            const stmt = this.db.prepare(`
+                INSERT INTO users (type, name, password)
+                VALUES (?, ?, ?)
+                ON CONFLICT(type, name) DO UPDATE SET
+                    password = excluded.password;
 
-            return {
-                meesage: 'created!',
-                data: { id: info.lastInsertRowid, type, name, password },
-            };
+            `,).run(type, name, password);
+
+            return true
         } catch (err) {
-            return {
-                message: 'Error with work in database',
-                error: err,
-            };
+            return false
         }
     }
+
+
 
     public getNameOfSuperUser(): string | undefined {
         const stmt = this.db.prepare(
@@ -79,10 +78,18 @@ export class User extends DataBase {
         }
     }
 
-    public getDataOfName(name: string): DBUser {
+    public getDataOfNameSuperUser(name: string): DBUser {
         const stmt = this.db.prepare(
-            'SELECT * FROM users WHERE name = ?'
-        ).get(name) as DBUser;
+            'SELECT * FROM users WHERE name = ? AND type = ?'
+        ).get(name, 'superuser') as DBUser;
+
+        return stmt
+    }
+
+    public getDataOfNameUser(name: string): DBUser {
+        const stmt = this.db.prepare(
+            'SELECT * FROM users WHERE name = ? AND type = ?'
+        ).get(name, 'user') as DBUser;
 
         return stmt
     }

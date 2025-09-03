@@ -22,19 +22,21 @@ export class DataBase {
 
     private createUser() {
         this.db
-            .prepare(
-                `
-            CREATE TABLE IF NOT EXISTS users (
+            .prepare(`
+                CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                type TEXT NOT NULL,
-                name TEXT NOT NULL UNIQUE,
+                type TEXT NOT NULL CHECK(type IN ('user', 'superuser')),
+                name TEXT NOT NULL,
                 password TEXT NOT NULL,
                 tokenRozklad TEXT,
                 tokenCabinet TEXT
-            )
-        `,
-            )
-            .run();
+            )`,).run();
+
+        this.db
+            .prepare(`
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_type_name
+                ON users(type, name);
+            `).run();
     }
 
     private createCache() {
