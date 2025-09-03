@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
 
-import { RozkladValidate } from '../../classes/data/Validate/RozkladValidate';
-import { WeekDay } from '../../classes/data/WeekDay';
+import { RozkladValidate } from '../../classes/Validate/RozkladValidate';
+import { WeekDay } from '../../classes/type/WeekDay';
 import { ScheduleData } from '../../classes/type/ScheduleData';
 
 export class RozkladFetch {

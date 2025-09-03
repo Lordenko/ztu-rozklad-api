@@ -1,5 +1,5 @@
 import { CabinetRequest } from "../Request/CabinetRequest"
-import { CabinetValidate } from "../../classes/data/Validate/CabinetValidate";
+import { CabinetValidate } from "../../classes/Validate/CabinetValidate";
 import { ScheduleData } from "../../classes/type/ScheduleData";
 
 import * as cheerio from 'cheerio';

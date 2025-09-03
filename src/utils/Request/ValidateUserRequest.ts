@@ -1,7 +1,7 @@
 import { request, FormData } from 'undici';
 import * as cheerio from 'cheerio';
 
-import { CSRFType } from '../../classes/data/csrf';
+import { CSRFType } from '../../classes/type/csrf';
 
 export class ValidateUserRequest {
     private loginUrl: string = 'https://rozklad.ztu.edu.ua/schedule/users/login';

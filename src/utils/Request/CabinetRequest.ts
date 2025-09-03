@@ -1,7 +1,7 @@
 import { request, FormData } from 'undici';
 import * as cheerio from 'cheerio';
 
-import { CSRFType } from '../../classes/data/csrf';
+import { CSRFType } from '../../classes/type/csrf';
 import { User } from '../../models/User';
 
 export class CabinetRequest {

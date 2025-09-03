@@ -1,0 +1,1 @@
+export type CSRFType = { [key: string]: string | undefined }
