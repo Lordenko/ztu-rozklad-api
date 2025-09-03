@@ -27,16 +27,16 @@ export class User extends DataBase {
         try {
             if (tokenCabinet !== undefined) {
                 const stmt = this.db.prepare(
-                    'UPDATE users SET tokenCabinet = ? WHERE name = ? LIMIT 1',
+                    'UPDATE users SET tokenCabinet = ? WHERE name = ? AND type = ? LIMIT 1',
                 );
-                stmt.run(tokenCabinet, name);
+                stmt.run(tokenCabinet, name, 'user');
             }
 
             if (tokenRozklad !== undefined) {
                 const stmt = this.db.prepare(
-                    'UPDATE users SET tokenRozklad = ? WHERE name = ? LIMIT 1',
+                    'UPDATE users SET tokenRozklad = ? WHERE name = ? AND type = ? LIMIT 1',
                 );
-                stmt.run(tokenRozklad, name);
+                stmt.run(tokenRozklad, name, 'superuser');
             }
 
             return {
@@ -77,6 +77,8 @@ export class User extends DataBase {
             return stmt.name
         }
     }
+
+
 
     public getDataOfNameSuperUser(name: string): DBUser {
         const stmt = this.db.prepare(
