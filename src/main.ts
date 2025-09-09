@@ -22,7 +22,7 @@ fastify.register(UpdUserRoute);
 fastify.register(groupIdRoute);
 
 
-fastify.listen({ port: 8080 }, (err, address) => {
+fastify.listen({ host: "0.0.0.0", port: 8080 }, (err, address) => {
     if (err) {
         console.error(err);
         process.exit(1);
