@@ -7,20 +7,24 @@ export class Cache extends DataBase {
     public insert(group: number, data: { "data": object, "selectiveDays": [string] }, status: "common" | "super"): void {
         this.db.prepare(`
         INSERT INTO cache ("group", data, selectiveDays, status, created_at)
-        VALUES (?, ?, ?, ?, datetime('now'))
+        VALUES (?, ?, ?, ?, datetime('now', 'localtime'))
         ON CONFLICT("group") DO UPDATE SET
             data = excluded.data,
             selectiveDays = excluded.selectiveDays,
             status = excluded.status,
-            created_at = datetime('now')
+            created_at = datetime('now', 'localtime')
         `).run(group, JSON.stringify(data.data), JSON.stringify(data.selectiveDays), status);
     }
 
     public getDataByGroup(group: number, status: "common" | "super") {
-        if (!this.checkExistByGroup(group) && !this.checkTimeExpiredByGroup(group)) return undefined
+        const exists = this.checkExistByGroup(group);
+        const expired = this.checkTimeExpiredByGroup(group);
+
+        if (exists === false || expired === true) return undefined
 
         const groupDataStatus: string | undefined = this.getStatusByGroup(group)
         if (groupDataStatus && status === 'super' && groupDataStatus === 'common') return undefined
+
 
         const stmt = this.db.prepare(
             'SELECT data, selectiveDays  FROM cache WHERE "group" = ?',
@@ -48,10 +52,10 @@ export class Cache extends DataBase {
     private getCreatedAtByGroup(group: number) {
         if (this.checkExistByGroup(group)) {
             const stmt = this.db.prepare(
-                'SELECT data FROM cache WHERE "group" = ?',
-            ).get(group) as { 'data': string };
+                'SELECT created_at FROM cache WHERE "group" = ?',
+            ).get(group) as { 'created_at': string };
 
-            return stmt ? stmt.data : undefined
+            return stmt ? stmt.created_at : undefined
         }
     }
 
@@ -67,7 +71,8 @@ export class Cache extends DataBase {
         const diffMs = nowTimeDate.getTime() - createdAtDate.getTime()
         const diffHours = diffMs / (1000 * 60 * 60)
 
-        return (diffHours <= acceptHours) ? true : false
+        const time = (diffHours <= acceptHours) ? true : false
 
+        return time
     }
 }

@@ -48,7 +48,7 @@ export class DataBase {
                     data TEXT NOT NULL,
                     selectiveDays TEXT NOT NULL,
                     status TEXT NOT NULL CHECK(status IN ('common', 'super')),
-                    created_at TEXT DEFAULT (datetime('now'))
+                    created_at TEXT DEFAULT (datetime('now', 'localtime'))
                 )
             `)
             .run();
