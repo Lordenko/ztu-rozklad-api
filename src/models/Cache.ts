@@ -71,7 +71,8 @@ export class Cache extends DataBase {
         const diffMs = nowTimeDate.getTime() - createdAtDate.getTime()
         const diffHours = diffMs / (1000 * 60 * 60)
 
-        const time = (diffHours <= acceptHours) ? true : false
+        console.log(diffHours);
+        const time = (diffHours >= acceptHours) ? true : false
 
         return time
     }
