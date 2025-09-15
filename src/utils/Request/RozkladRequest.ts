@@ -7,13 +7,9 @@ export class RozkladRequest {
     private attempts: number = 0;
     private allowAttempts: number = 2;
 
-    private username: string;
     private db: User
 
-    constructor(
-        username: string
-    ) {
-        this.username = username;
+    constructor() {
         this.db = new User()
     }
 
@@ -21,7 +17,9 @@ export class RozkladRequest {
         id: number
     ): Promise<string> {
         const url = `https://rozklad.ztu.edu.ua/schedule/group?id=${id}`;
-        const userData = this.db.getDataOfNameSuperUser(this.username)
+        const userData = this.db.getDataOfNameSuperUser()
+        console.log(`userdata = ${userData}`);
+
 
         return await this.connectToken(url, userData.name, userData.password, userData.tokenRozklad);
     }

@@ -80,10 +80,10 @@ export class User extends DataBase {
 
 
 
-    public getDataOfNameSuperUser(name: string): DBUser {
+    public getDataOfNameSuperUser(): DBUser {
         const stmt = this.db.prepare(
-            'SELECT * FROM users WHERE name = ? AND type = ?'
-        ).get(name, 'superuser') as DBUser;
+            'SELECT * FROM users WHERE type = ?'
+        ).get('superuser') as DBUser;
 
         return stmt
     }

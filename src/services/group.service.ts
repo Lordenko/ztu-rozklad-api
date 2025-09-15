@@ -12,6 +12,8 @@ import { Lesson } from '../classes/type/ScheduleData';
 
 export async function fetchGroup(id: number, username?: string) {
     const name = username ?? new User().getNameOfSuperUser();
+    console.log(name);
+
     if (!name) return { message: 'SuperUser is corrupted or does not exist!' };
 
     const status = username ? 'super' : 'common'
@@ -20,7 +22,7 @@ export async function fetchGroup(id: number, username?: string) {
     const cacheData = cacheModel.getDataByGroup(id, status)
     if (cacheData) return cacheData
 
-    const rozkladRequest = new RozkladRequest(name);
+    const rozkladRequest = new RozkladRequest();
     const rozkladData = await rozkladRequest.request(id);
 
     const rozkladFetch = new RozkladFetch();
