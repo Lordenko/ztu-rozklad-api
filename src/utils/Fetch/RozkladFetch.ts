@@ -144,21 +144,21 @@ export class RozkladFetch {
                     $(tr)
                         .find('td')
                         .each((tdKey, td) => {
-                            this.checkDayInData(
-                                data,
-                                weekName,
-                            );
+                            if ($(td).find("*").length > 0) {
+                                this.checkDayInData(
+                                    data,
+                                    weekName,
+                                );
 
-                            const pairs = $(td).find('div.pair');
-                            pairs.each((pairKey, pair) => {
-                                const $pair = $(pair);
+                                const pairs = $(td).find('div.pair');
+                                pairs.each((pairKey, pair) => {
+                                    const $pair = $(pair);
 
-                                if ($pair.find('*').length > 0) {
                                     const dayName = weekDay.stringName(tdKey)
 
                                     if (pairs.length > 2) {
                                         const dayText = `${weekName}, ${dayName}`
-                                        if (!selectiveDays.includes(dayName)) {
+                                        if (!selectiveDays.includes(dayText)) {
                                             selectiveDays.push(dayText)
                                         }
                                     }
@@ -178,8 +178,10 @@ export class RozkladFetch {
                                             validate
                                         );
                                     }
-                                }
-                            });
+                                });
+                            }
+
+
                         });
                 });
         });

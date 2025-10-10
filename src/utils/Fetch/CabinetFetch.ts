@@ -55,7 +55,7 @@ export class CabinetFetch {
     }
 
     private getDescription($: any, pair: any): string | undefined {
-        const div = $(pair).find('div')[8];
+        const div = $(pair).find('div')[9];
         let text: string = $(div).text();
         text = text.replace(/\s+/g, ' ').trim()
         return (text.includes('Викладач ще не надав інформацію')) ? undefined : text;
@@ -67,12 +67,12 @@ export class CabinetFetch {
     }
 
     private getTeacher($: any, pair: any): string[] {
-        const teachersText: string = $($(pair).find('.date>.type')[3]).text().trim()
+        const teachersText: string = $($(pair).find('.date>.type')[4]).text().trim()
         return teachersText.split(', ')
     }
 
     private getRoom($: any, pair: any): string[] {
-        const roomsText = $($(pair).find('.date>.type')[2]).text();
+        const roomsText = $($(pair).find('.date>.type')[3]).text();
         return roomsText
             .split(' / ')
             .map((room: string) => room.replace(/\s+/g, ' ').trim())
@@ -95,7 +95,7 @@ export class CabinetFetch {
 
     private getWeekName($: any): string {
         const weekTagNumber = $('.active>a').first().text().trim()
-        const weekNumber = weekTagNumber == 0 ? weekTagNumber : ($('.active>a').first().text().trim() % 2) + 1
+        const weekNumber = weekTagNumber == 0 ? weekTagNumber : ($('.page-item.active>a').first().text().trim() % 2) === 0 ? 2 : 1
         return `Тиждень ${weekNumber}`
     }
 

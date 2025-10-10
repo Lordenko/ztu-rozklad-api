@@ -28,40 +28,43 @@ export async function fetchGroup(id: number, username?: string) {
     const rozkladFetch = new RozkladFetch();
     const { data: rozkladJson, selectiveDays } = await rozkladFetch.fetch(rozkladData);
 
-    if (!username) {
+    if (status === 'common') {
         const data = { data: rozkladJson, selectiveDays }
         cacheModel.insert(id, data, status)
         return data;
     }
 
+
     const cabinetRequest = new CabinetRequest(name);
     const cabinetFetch = new CabinetFetch(cabinetRequest);
     const cabinetJson = await cabinetFetch.fetch();
 
+
+
     const resultJson = getResultJson(rozkladJson, cabinetJson);
 
-    const data = { data: resultJson, selectiveDays };
+    const data = { data: resultJson, cabinetJson: cabinetJson, selectiveDays };
     cacheModel.insert(id, data, status)
-    return data;
+    return cabinetJson;
 }
 
 
 function getResultJson(rozkladJson: ScheduleData, cabinetJson: ScheduleData) {
     Object.entries(cabinetJson).forEach(([week, weekData]) => {
         if (!rozkladJson[week]) {
-            // console.warn(`Пропущено тиждень ${week} - немає в розкладі`);
+            console.warn(`Пропущено тиждень ${week} - немає в розкладі`);
             return;
         }
 
         Object.entries(weekData).forEach(([day, dayData]) => {
             if (!rozkladJson[week][day]) {
-                // console.warn(`Пропущено день ${day} у тижні ${week} - немає в розкладі`);
+                console.warn(`Пропущено день ${day} у тижні ${week} - немає в розкладі`);
                 return;
             }
 
             Object.entries(dayData).forEach(([hour, hourData]) => {
                 if (!rozkladJson[week][day][hour]) {
-                    // console.warn(`Пропущено годину ${hour} у ${day}, тиждень ${week} - немає в розкладі`);
+                    console.warn(`Пропущено годину ${hour} у ${day}, тиждень ${week} - немає в розкладі`);
                     return;
                 }
 
@@ -69,11 +72,16 @@ function getResultJson(rozkladJson: ScheduleData, cabinetJson: ScheduleData) {
                     const hourDataRozklad = rozkladJson[week][day][hour];
 
                     hourDataRozklad.forEach((rozkladLesson: Lesson, rozkladLessonIndex: number) => {
+                        // console.log(rozkladLesson.subject + '  ' + lesson.subject);
+                        // console.log(JSON.stringify(rozkladLesson.teacher) + '  ' + JSON.stringify(lesson.teacher));
+                        // console.log(JSON.stringify(rozkladLesson.room) + '  ' + JSON.stringify(lesson.room));
+
                         if (
                             rozkladLesson.subject === lesson.subject &&
                             JSON.stringify(rozkladLesson.teacher) === JSON.stringify(lesson.teacher) &&
                             JSON.stringify(rozkladLesson.room) === JSON.stringify(lesson.room)
                         ) {
+
                             rozkladJson[week][day][hour][rozkladLessonIndex].description = lesson.description;
                         }
                     });
