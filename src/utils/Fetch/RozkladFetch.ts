@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio';
 
 import { RozkladValidate } from '../../classes/Validate/RozkladValidate';
 import { WeekDay } from '../../classes/type/WeekDay';
-import { ScheduleData } from '../../classes/type/ScheduleData';
+import { ScheduleData, Lesson } from '../../classes/type/ScheduleData';
 
 export class RozkladFetch {
     private getSubject(pair: any): string {
@@ -108,7 +108,18 @@ export class RozkladFetch {
             data[weekName][dayName] ??= {};
             data[weekName][dayName][hour] ??= [];
 
-            data[weekName][dayName][hour].push(validate.toDictionary());
+            // data[weekName][dayName][hour].push(validate.toDictionary());
+
+            const isDuplicate = data[weekName][dayName][hour].some((lesson: Lesson) => {
+                if (lesson.subject !== validate.subject) return false;
+
+                const hasSameTeacher = lesson.teacher.some(t => validate.teacher.includes(t));
+                return hasSameTeacher;
+            });
+
+            if (!isDuplicate) {
+                data[weekName][dayName][hour].push(validate.toDictionary());
+            }
         }
     }
 

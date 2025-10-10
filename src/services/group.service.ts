@@ -42,7 +42,7 @@ export async function fetchGroup(id: number, username?: string) {
 
     const resultJson = getResultJson(rozkladJson, cabinetJson);
 
-    const data = { data: resultJson, cabinetJson: cabinetJson, selectiveDays };
+    const data = { data: resultJson, selectiveDays };
     cacheModel.insert(id, data, status)
     return data;
 }
