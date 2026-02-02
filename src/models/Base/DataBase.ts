@@ -8,7 +8,7 @@ export class DataBase {
     constructor() {
         const name: string = 'database';
 
-        const myPath = path.join(path.dirname(__filename), '..', '..', 'data');
+        const myPath = path.join(process.cwd(), 'data');
         const dbPath = path.join(myPath, `${name}.sqlite`);
 
         fs.mkdirSync(myPath, { recursive: true });
