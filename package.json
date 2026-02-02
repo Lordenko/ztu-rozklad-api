@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "start": "tsc -p tsconfig.json && node ./src/main.js",
+        "start": "tsc -p tsconfig.json && node ./dist/main.js",
         "clear-table": "ts-node ./scripts/clearCache.ts"
     },
     "repository": {
