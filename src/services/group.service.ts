@@ -61,27 +61,27 @@ function getResultJson(rozkladJson: ScheduleData, cabinetJson: ScheduleData) {
                 return;
             }
 
+            const hourIndex = getHourIndex(rozkladJson[week][day]);
+
             Object.entries(dayData).forEach(([hour, hourData]) => {
-                if (!rozkladJson[week][day][hour]) {
+                const rozkladHour = hourIndex.get(normalizeHour(hour));
+
+                if (!rozkladHour) {
                     console.warn(`Пропущено годину ${hour} у ${day}, тиждень ${week} - немає в розкладі`);
                     return;
                 }
 
                 hourData.forEach((lesson: Lesson) => {
-                    const hourDataRozklad = rozkladJson[week][day][hour];
+                    const hourDataRozklad = rozkladJson[week][day][rozkladHour];
 
-                    hourDataRozklad.forEach((rozkladLesson: Lesson, rozkladLessonIndex: number) => {
-                        // console.log(rozkladLesson.subject + '  ' + lesson.subject);
-                        // console.log(JSON.stringify(rozkladLesson.teacher) + '  ' + JSON.stringify(lesson.teacher));
-                        // console.log(JSON.stringify(rozkladLesson.room) + '  ' + JSON.stringify(lesson.room));
-
+                    hourDataRozklad.forEach((rozkladLesson: Lesson) => {
                         if (
                             rozkladLesson.subject === lesson.subject &&
                             JSON.stringify(rozkladLesson.teacher) === JSON.stringify(lesson.teacher) &&
                             JSON.stringify(rozkladLesson.room) === JSON.stringify(lesson.room)
                         ) {
 
-                            rozkladJson[week][day][hour][rozkladLessonIndex].description = lesson.description;
+                            rozkladLesson.description = lesson.description;
                         }
                     });
                 });
@@ -90,4 +90,14 @@ function getResultJson(rozkladJson: ScheduleData, cabinetJson: ScheduleData) {
     });
 
     return rozkladJson;
+}
+
+// The two sources spell the same slot differently ('08:30-09:50' against
+// '08:30 - 09:50'), so hours are matched on their digits only.
+function getHourIndex(dayData: { [hour: string]: Lesson[] }): Map<string, string> {
+    return new Map(Object.keys(dayData).map((hour) => [normalizeHour(hour), hour]));
+}
+
+function normalizeHour(hour: string): string {
+    return hour.replace(/\s+/g, '');
 }
