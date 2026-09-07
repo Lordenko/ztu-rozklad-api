@@ -2,9 +2,10 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import { DataBase } from './Base/DataBase';
+import { ScheduleResult } from '../classes/type/ScheduleData';
 
 export class Cache extends DataBase {
-    public insert(group: number, data: { "data": object, "selectiveDays": [string] }, status: "common" | "super"): void {
+    public insert(group: number, data: ScheduleResult, status: "common" | "super"): void {
         this.db.prepare(`
         INSERT INTO cache ("group", data, selectiveDays, status, created_at)
         VALUES (?, ?, ?, ?, datetime('now', 'localtime'))
