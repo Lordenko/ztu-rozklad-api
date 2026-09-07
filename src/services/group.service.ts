@@ -4,18 +4,12 @@ import { RozkladRequest } from '../utils/Request/RozkladRequest';
 import { CabinetFetch } from '../utils/Fetch/CabinetFetch';
 import { CabinetRequest } from '../utils/Request/CabinetRequest';
 
-import { User } from '../models/User';
 import { Cache } from '../models/Cache';
 
 import { ScheduleData } from '../classes/type/ScheduleData';
 import { Lesson } from '../classes/type/ScheduleData';
 
 export async function fetchGroup(id: number, username?: string) {
-    const name = username ?? new User().getNameOfSuperUser();
-    console.log(name);
-
-    if (!name) return { message: 'SuperUser is corrupted or does not exist!' };
-
     const status = username ? 'super' : 'common'
 
     const cacheModel = new Cache()
@@ -28,14 +22,16 @@ export async function fetchGroup(id: number, username?: string) {
     const rozkladFetch = new RozkladFetch();
     const { data: rozkladJson, selectiveDays } = await rozkladFetch.fetch(rozkladData);
 
-    if (status === 'common') {
+    // Without a cabinet account there is nothing to merge, and the rozklad page
+    // itself needs no superuser any more.
+    if (!username) {
         const data = { data: rozkladJson, selectiveDays }
-        cacheModel.insert(id, data, status)
+        cacheModel.insert(id, data, 'common')
         return data;
     }
 
 
-    const cabinetRequest = new CabinetRequest(name);
+    const cabinetRequest = new CabinetRequest(username);
     const cabinetFetch = new CabinetFetch(cabinetRequest);
     const cabinetJson = await cabinetFetch.fetch();
 
