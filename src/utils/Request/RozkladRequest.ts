@@ -2,6 +2,7 @@ import { request, FormData } from 'undici';
 import { User } from '../../models/User';
 
 export class RozkladRequest {
+    private baseUrl: string = 'https://rozklad.ztu.edu.ua/schedule/group';
     private loginUrl: string = 'https://rozklad.ztu.edu.ua/schedule/users/login';
 
     private attempts: number = 0;
@@ -16,12 +17,40 @@ export class RozkladRequest {
     public async request(
         id: number
     ): Promise<string> {
-        const url = `https://rozklad.ztu.edu.ua/schedule/group?id=${id}`;
-        const userData = this.db.getDataOfNameSuperUser()
-        console.log(`userdata = ${userData}`);
+        const url = `${this.baseUrl}?id=${id}`;
 
+        const anonymous = await this.connectAnonymous(url);
+        if (anonymous !== undefined) return anonymous;
+
+        const userData = this.db.getDataOfNameSuperUser();
+
+        if (!userData) {
+            const errorText = 'Rozklad asked for auth, but superuser does not exist';
+            console.log(errorText);
+            return errorText;
+        }
 
         return await this.connectToken(url, userData.name, userData.password, userData.tokenRozklad);
+    }
+
+    // Schedule pages are public, so signing in only costs an extra round trip -
+    // and a signed in session even adds an editor toolbar inside every lesson
+    // card. Auth is kept below as a fallback in case that changes again.
+    private async connectAnonymous(url: string): Promise<string | undefined> {
+        const { statusCode, body } = await request(url);
+        const html = await body.text();
+
+        if (statusCode === 200 && this.checkSchedulePage(html)) {
+            console.log('Successful anonymous attempt to rozklad');
+            return html;
+        }
+
+        console.log(`Unsuccessful anonymous attempt to rozklad (${statusCode})`);
+        return undefined;
+    }
+
+    private checkSchedulePage(html: string): boolean {
+        return html.includes('sch-head');
     }
 
     private async connectToken(

@@ -1,13 +1,10 @@
-import * as path from 'path';
-import * as fs from 'fs';
-
 import { DataBase } from './Base/DataBase';
 import { DBUser } from '../classes/type/DBUser';
 
 export class User extends DataBase {
     public checkSuperUser() {
         const stmt =
-            (this.db
+            (this
                 .prepare('SELECT * FROM users WHERE type = ? LIMIT 1')
                 .get('superuser') as DBUser) || undefined;
 
@@ -26,14 +23,14 @@ export class User extends DataBase {
     ): object {
         try {
             if (tokenCabinet !== undefined) {
-                const stmt = this.db.prepare(
+                const stmt = this.prepare(
                     'UPDATE users SET tokenCabinet = ? WHERE name = ? AND type = ? LIMIT 1',
                 );
                 stmt.run(tokenCabinet, name, 'user');
             }
 
             if (tokenRozklad !== undefined) {
-                const stmt = this.db.prepare(
+                const stmt = this.prepare(
                     'UPDATE users SET tokenRozklad = ? WHERE name = ? AND type = ? LIMIT 1',
                 );
                 stmt.run(tokenRozklad, name, 'superuser');
@@ -52,7 +49,7 @@ export class User extends DataBase {
 
     public new(type: string, name: string, password: string): boolean {
         try {
-            const stmt = this.db.prepare(`
+            const stmt = this.prepare(`
                 INSERT INTO users (type, name, password)
                 VALUES (?, ?, ?)
                 ON CONFLICT(type, name) DO UPDATE SET
@@ -69,7 +66,7 @@ export class User extends DataBase {
 
 
     public getNameOfSuperUser(): string | undefined {
-        const stmt = this.db.prepare(
+        const stmt = this.prepare(
             'SELECT name FROM users WHERE type = ?',
         ).get('superuser') as { 'name': string };
 
@@ -81,7 +78,7 @@ export class User extends DataBase {
 
 
     public getDataOfNameSuperUser(): DBUser {
-        const stmt = this.db.prepare(
+        const stmt = this.prepare(
             'SELECT * FROM users WHERE type = ?'
         ).get('superuser') as DBUser;
 
@@ -89,7 +86,7 @@ export class User extends DataBase {
     }
 
     public getDataOfNameUser(name: string): DBUser {
-        const stmt = this.db.prepare(
+        const stmt = this.prepare(
             'SELECT * FROM users WHERE name = ? AND type = ?'
         ).get(name, 'user') as DBUser;
 

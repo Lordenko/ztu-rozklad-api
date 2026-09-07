@@ -1,11 +1,17 @@
-import * as path from 'path';
-import * as fs from 'fs';
-
 import { DataBase } from './Base/DataBase';
+import { ScheduleResult } from '../classes/type/ScheduleData';
+
+type CacheRow = {
+    data: string;
+    selectiveDays: string;
+    status: string;
+};
 
 export class Cache extends DataBase {
-    public insert(group: number, data: { "data": object, "selectiveDays": [string] }, status: "common" | "super"): void {
-        this.db.prepare(`
+    private readonly acceptHours: number = 1;
+
+    public insert(group: number, data: ScheduleResult, status: "common" | "super"): void {
+        this.prepare(`
         INSERT INTO cache ("group", data, selectiveDays, status, created_at)
         VALUES (?, ?, ?, ?, datetime('now', 'localtime'))
         ON CONFLICT("group") DO UPDATE SET
@@ -16,63 +22,24 @@ export class Cache extends DataBase {
         `).run(group, JSON.stringify(data.data), JSON.stringify(data.selectiveDays), status);
     }
 
-    public getDataByGroup(group: number, status: "common" | "super") {
-        const exists = this.checkExistByGroup(group);
-        const expired = this.checkTimeExpiredByGroup(group);
+    // Existence and expiry used to cost a separate select each; the row is now
+    // fetched once, with the ttl applied by sqlite itself.
+    public getDataByGroup(group: number, status: "common" | "super"): ScheduleResult | undefined {
+        const row = this.prepare(`
+            SELECT data, selectiveDays, status
+            FROM cache
+            WHERE "group" = ?
+              AND created_at > datetime('now', 'localtime', ?)
+        `).get(group, `-${this.acceptHours} hours`) as CacheRow | undefined;
 
-        if (exists === false || expired === true) return undefined
+        if (!row) return undefined;
 
-        const groupDataStatus: string | undefined = this.getStatusByGroup(group)
-        if (groupDataStatus && status === 'super' && groupDataStatus === 'common') return undefined
+        // A cabinet backed request cannot be served from a plain rozklad entry.
+        if (status === 'super' && row.status === 'common') return undefined;
 
-
-        const stmt = this.db.prepare(
-            'SELECT data, selectiveDays  FROM cache WHERE "group" = ?',
-        ).get(group) as { 'data': string, 'selectiveDays': string };
-
-        return stmt ? { 'data': JSON.parse(stmt.data), 'selectiveDays': JSON.parse(stmt.selectiveDays) } : undefined
-    }
-
-    private getStatusByGroup(group: number): string | undefined {
-        const stmt = this.db.prepare(
-            'SELECT status FROM cache WHERE "group" = ?',
-        ).get(group) as { 'status': string };
-
-        return stmt ? stmt.status : undefined
-    }
-
-    private checkExistByGroup(group: number): boolean {
-        const stmt = this.db.prepare(
-            'SELECT "group" FROM cache WHERE "group" = ?',
-        ).get(group);
-
-        return stmt ? true : false
-    }
-
-    private getCreatedAtByGroup(group: number) {
-        if (this.checkExistByGroup(group)) {
-            const stmt = this.db.prepare(
-                'SELECT created_at FROM cache WHERE "group" = ?',
-            ).get(group) as { 'created_at': string };
-
-            return stmt ? stmt.created_at : undefined
+        return {
+            'data': JSON.parse(row.data),
+            'selectiveDays': JSON.parse(row.selectiveDays)
         }
-    }
-
-    private checkTimeExpiredByGroup(group: number): boolean {
-        const acceptHours: number = 1
-
-        const createdAt = this.getCreatedAtByGroup(group)
-        if (!createdAt) return false
-
-        const createdAtDate: Date = new Date(createdAt)
-        const nowTimeDate: Date = new Date()
-
-        const diffMs = nowTimeDate.getTime() - createdAtDate.getTime()
-        const diffHours = diffMs / (1000 * 60 * 60)
-
-        const time = (diffHours >= acceptHours) ? true : false
-
-        return time
     }
 }
