@@ -2,10 +2,11 @@ import { CabinetRequest } from "../Request/CabinetRequest"
 import { CabinetValidate } from "../../classes/Validate/CabinetValidate";
 import { ScheduleData } from "../../classes/type/ScheduleData";
 
-import * as cheerio from 'cheerio';
+import { loadHtml } from './loadHtml';
 
 export class CabinetFetch {
     private cabinetRequest: CabinetRequest
+    private firstDayInWeek: number = 1
 
     constructor(cabinetRequest: CabinetRequest) {
         this.cabinetRequest = cabinetRequest
@@ -13,33 +14,53 @@ export class CabinetFetch {
 
     async fetch(): Promise<ScheduleData> {
         const data: ScheduleData = {}
-        const actualWeekNumber: number = await this.getActualWeekNumber();
-        const urls: Array<string> = this.getUrls(actualWeekNumber);
 
-        for (const url of urls) {
-            const html = await this.cabinetRequest.request(url)
-            const $ = cheerio.load(html)
+        // перший запит послідовний: якщо сесія застаріла, він оновить cookie для решти.
+        // Це сторінка поточного дня поточного тижня — її теж розбираємо
+        const $actual = loadHtml(await this.cabinetRequest.request())
+        this.parsePage($actual, data)
 
-            // не сторінка розкладу (напр. не вдалося увійти) — тиждень не вважаємо перевіреним
-            if ($('.sch-bar-day').length === 0) continue
+        const actualWeekNumber: number = this.getWeekNumber($actual);
+        const weeks: number[] = this.getWeeks(actualWeekNumber);
 
-            const weekName = this.getWeekName($)
-            const dayName = this.getDayName($)
+        await Promise.all(weeks.map(async (week: number) => {
+            // з будь-якої сторінки тижня видно, у які дні є пари (.sch-day без .is-empty)
+            let $known = $actual
+            let knownDay = this.getActiveDay($actual)
 
-            // тиждень позначаємо як перевірений, навіть якщо пар немає
-            data[weekName] ??= {};
+            if (week !== actualWeekNumber) {
+                $known = loadHtml(await this.cabinetRequest.request(this.getUrl(week, this.firstDayInWeek)))
+                knownDay = this.firstDayInWeek
+                this.parsePage($known, data)
+            }
 
-            // .sch-rest — вибіркові потоку, які користувач не обирав
-            $('.sch-pair').not('.sch-rest .sch-pair').each((_, pair) => {
-                if (pair) {
-                    const hour = this.getHour($, pair);
-                    const validate = this.createValidate($, pair)
-                    this.updateData(data, validate, weekName, dayName, hour)
-                }
-            });
-        }
+            const days = this.getNotEmptyDays($known).filter((day: number) => day !== knownDay)
+
+            await Promise.all(days.map(async (day: number) => {
+                const $ = loadHtml(await this.cabinetRequest.request(this.getUrl(week, day)))
+                this.parsePage($, data)
+            }))
+        }))
 
         return data;
+    }
+
+    private parsePage($: any, data: ScheduleData) {
+        // не сторінка розкладу (напр. не вдалося увійти) — тиждень не вважаємо перевіреним
+        if ($('.sch-bar-day').length === 0) return
+
+        const weekName = this.getWeekName($)
+        const dayName = this.getDayName($)
+
+        // тиждень позначаємо як перевірений, навіть якщо пар немає
+        data[weekName] ??= {};
+
+        // .sch-rest — вибіркові потоку, які користувач не обирав
+        $('.sch-pair').not('.sch-rest .sch-pair').each((_: number, pair: any) => {
+            const hour = this.getHour($, pair);
+            const validate = this.createValidate($, pair)
+            this.updateData(data, validate, weekName, dayName, hour)
+        });
     }
 
     private createValidate($: any, pair: any): CabinetValidate {
@@ -108,35 +129,39 @@ export class CabinetFetch {
         return parseInt($('a.sch-week.is-active').first().text().trim())
     }
 
-    private async getActualWeekNumber(): Promise<number> {
-        const html: string = await this.cabinetRequest.request()
-        const $ = cheerio.load(html)
-        return this.getWeekNumber($);
+    private getDayNumber($: any, day: any): number | undefined {
+        const dayMatch = ($(day).attr('href') ?? '').match(/day=(\d+)/)
+        return dayMatch ? parseInt(dayMatch[1]) : undefined
     }
 
-    private getUrls(actualWeekNumber: number): Array<string> {
+    private getActiveDay($: any): number | undefined {
+        return this.getDayNumber($, $('.sch-picker a.sch-day.is-active').first())
+    }
+
+    private getNotEmptyDays($: any): number[] {
+        const days: number[] = [];
+
+        $('.sch-picker a.sch-day').not('.is-empty').each((_: number, day: any) => {
+            const dayNumber = this.getDayNumber($, day)
+            if (dayNumber !== undefined) days.push(dayNumber)
+        });
+
+        return days;
+    }
+
+    private getWeeks(actualWeekNumber: number): number[] {
         const lastWeekNumber: number = 16
         const checkWeeks: number = 2
 
-        const firstDayInWeek: number = 1
-        const daysInWeek: number = 7
-
-        const baseUrl = `https://cabinet.ztu.edu.ua/site/schedule`
-        const urls: Array<string> = []
-
-        for (let week = actualWeekNumber; week <= this.floorTo(actualWeekNumber + checkWeeks - 1, lastWeekNumber); week++) {
-            for (let day = firstDayInWeek; day <= daysInWeek; day++) {
-                urls.push(`${baseUrl}?week=${week}&day=${day}`)
-            }
+        const weeks: number[] = []
+        for (let week = actualWeekNumber; week <= Math.min(actualWeekNumber + checkWeeks - 1, lastWeekNumber); week++) {
+            weeks.push(week)
         }
 
-        return urls;
+        return weeks;
     }
 
-    private floorTo(value: number, step: number): number {
-        if (value <= step) return value
-        return Math.floor(value / 16) * 16;
+    private getUrl(week: number, day: number): string {
+        return `https://cabinet.ztu.edu.ua/site/schedule?week=${week}&day=${day}`
     }
-
-
 }

@@ -8,7 +8,7 @@ export class CabinetRequest {
     private loginUrl: string = 'https://cabinet.ztu.edu.ua/site/login';
     private baseUrl: string = 'https://cabinet.ztu.edu.ua/site/schedule';
 
-    private attempts: number = 0;
+    // лічильник спроб окремий для кожного запиту, бо запити виконуються паралельно
     private allowAttempts: number = 2;
 
     private username: string;
@@ -32,9 +32,10 @@ export class CabinetRequest {
         userName: string,
         password: string,
         cookieValue?: string | null,
+        attempt: number = 1,
     ): Promise<string> {
 
-        if (this.attempt()) {
+        if (attempt <= this.allowAttempts) {
             const { statusCode, body } = await request(url, {
                 method: 'GET',
                 headers: {
@@ -49,8 +50,8 @@ export class CabinetRequest {
 
                 return await bodyText;
             } else {
-                console.log(`Unsuccessful attempt to cabinet #${this.attempts} (${userName})`);
-                return this.connectPassword(url, userName, password)
+                console.log(`Unsuccessful attempt to cabinet #${attempt} (${userName})`);
+                return this.connectPassword(url, userName, password, attempt)
             }
 
         } else {
@@ -66,6 +67,7 @@ export class CabinetRequest {
         url: string,
         username: string,
         password: string,
+        attempt: number,
     ): Promise<string> {
 
         const cookieValue = await this.login(username, password);
@@ -76,6 +78,7 @@ export class CabinetRequest {
                 username,
                 password,
                 cookieValue,
+                attempt + 1,
             );
         }
 
@@ -159,18 +162,8 @@ export class CabinetRequest {
         }
     }
 
-    private attempt(): boolean {
-        if (this.attempts < this.allowAttempts) {
-            this.attempts++;
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     private checkSuccessfulConnect(statusCode: number, bodyText: String) {
         if (statusCode === 200 && bodyText.toLowerCase().includes('logout')) {
-            this.attempts = 0;
             return true;
         }
         else return false
