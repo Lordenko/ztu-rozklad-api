@@ -16,4 +16,5 @@ services:
 
 networks:
   ztu-network:
-    external: true
+    name: ztu-network
+
