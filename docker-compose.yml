@@ -11,6 +11,8 @@ services:
       - 8080:8080
     volumes:
       - ./src/data:/app/data
+    networks:
+      - ztu-network
 
 networks:
   ztu-network:
