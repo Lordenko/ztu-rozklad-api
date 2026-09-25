@@ -1,4 +1,4 @@
-import * as cheerio from 'cheerio';
+import { loadHtml } from './loadHtml';
 
 import { RozkladValidate } from '../../classes/Validate/RozkladValidate';
 import { ScheduleData, Lesson } from '../../classes/type/ScheduleData';
@@ -135,13 +135,19 @@ export class RozkladFetch {
         }
     }
 
+    // .sch-days — дубль розкладу для мобільної версії (близько половини сторінки),
+    // вирізаємо його до розбору; він тягнеться до кінця тижня (</section>)
+    private removeMobileDays(html: string): string {
+        return html.replace(/<div class="sch-days">[\s\S]*?<\/section>/g, '</details></section>');
+    }
+
     public async fetch(html: string): Promise<{ [key: string]: any }> {
-        const $ = cheerio.load(html);
+        const $ = loadHtml(this.removeMobileDays(html));
 
         const data: ScheduleData = {};
         const selectiveDays: string[] = [];
 
-        // .sch-days — дубль розкладу для мобільної версії, беремо тільки таблицю
+        // беремо тільки таблицю (.sch-days, якщо лишився, ігноруємо)
         $('section.sch-week').each((_, week) => {
             const weekName = $(week).find('.sch-week-title').text().trim();
             const table = $(week).find('table.sch-table');
