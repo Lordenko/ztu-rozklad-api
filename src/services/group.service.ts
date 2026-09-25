@@ -23,22 +23,19 @@ export async function fetchGroup(id: number, username?: string) {
     const cacheData = cacheModel.getDataByGroup(id, username)
     if (cacheData) return cacheData
 
-    const rozkladRequest = new RozkladRequest();
-    const rozkladData = await rozkladRequest.request(id);
+    // rozklad і cabinet не залежать одне від одного — завантажуємо паралельно
+    const [{ data: rozkladJson, selectiveDays }, cabinetJson] = await Promise.all([
+        fetchRozklad(id),
+        (status === 'super')
+            ? new CabinetFetch(new CabinetRequest(username as string)).fetch()
+            : undefined,
+    ]);
 
-    const rozkladFetch = new RozkladFetch();
-    const { data: rozkladJson, selectiveDays } = await rozkladFetch.fetch(rozkladData);
-
-    if (status === 'common') {
+    if (!cabinetJson) {
         const data = { data: rozkladJson, selectiveDays }
         cacheModel.insert(id, data, status)
         return data;
     }
-
-
-    const cabinetRequest = new CabinetRequest(username as string);
-    const cabinetFetch = new CabinetFetch(cabinetRequest);
-    const cabinetJson = await cabinetFetch.fetch();
 
 
     const resultJson = getResultJson(rozkladJson, cabinetJson);
@@ -49,6 +46,14 @@ export async function fetchGroup(id: number, username?: string) {
     return data;
 }
 
+
+async function fetchRozklad(id: number) {
+    const rozkladRequest = new RozkladRequest();
+    const rozkladData = await rozkladRequest.request(id);
+
+    const rozkladFetch = new RozkladFetch();
+    return await rozkladFetch.fetch(rozkladData);
+}
 
 function isSameLesson(rozkladLesson: Lesson, cabinetLesson: Lesson): boolean {
     return (
