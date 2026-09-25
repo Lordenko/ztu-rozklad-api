@@ -40,15 +40,23 @@ export class DataBase {
     }
 
     private createCache() {
+        // стара схема кешу (без username) — кеш тимчасовий, тому просто перестворюємо таблицю
+        const columns = this.db.prepare('PRAGMA table_info(cache)').all() as { name: string }[];
+        if (columns.length > 0 && !columns.some((column) => column.name === 'username')) {
+            this.db.prepare('DROP TABLE cache').run();
+        }
+
         this.db
             .prepare(`
                 CREATE TABLE IF NOT EXISTS cache (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    "group" NUMBER NOT NULL UNIQUE,
+                    "group" NUMBER NOT NULL,
+                    username TEXT NOT NULL DEFAULT '',
                     data TEXT NOT NULL,
                     selectiveDays TEXT NOT NULL,
                     status TEXT NOT NULL CHECK(status IN ('common', 'super')),
-                    created_at TEXT DEFAULT (datetime('now', 'localtime'))
+                    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+                    UNIQUE("group", username)
                 )
             `)
             .run();

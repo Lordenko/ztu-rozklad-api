@@ -18,8 +18,9 @@ export async function fetchGroup(id: number, username?: string) {
 
     const status = username ? 'super' : 'common'
 
+    // вибіркові для 'super' залежать від користувача, тому кеш окремий для кожного
     const cacheModel = new Cache()
-    const cacheData = cacheModel.getDataByGroup(id, status)
+    const cacheData = cacheModel.getDataByGroup(id, username)
     if (cacheData) return cacheData
 
     const rozkladRequest = new RozkladRequest();
@@ -43,7 +44,7 @@ export async function fetchGroup(id: number, username?: string) {
     const resultJson = getResultJson(rozkladJson, cabinetJson);
 
     const data = { data: resultJson, selectiveDays };
-    cacheModel.insert(id, data, status)
+    cacheModel.insert(id, data, status, username)
     return data;
 }
 
