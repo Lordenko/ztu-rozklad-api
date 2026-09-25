@@ -1,2 +1,20 @@
 dist
 node_modules
+
+# база з даними користувачів не повинна потрапляти в образ
+data
+src/data
+*.sqlite
+
+.git
+.gitignore
+.vscode
+.env
+.env.*
+npm-debug.log*
+
+Dockerfile
+docker-compose.yml
+.dockerignore
+README.md
+LICENSE

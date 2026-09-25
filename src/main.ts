@@ -6,7 +6,7 @@ import UpdUserRoute from './routes/updUser.route';
 import groupIdRoute from './routes/groupId.route';
 
 import { DataBase } from './models/Base/DataBase';
-import { User } from './models/User';
+// import { User } from './models/User';
 import { GroupIdFetch } from './utils/Fetch/GroupIdFetch';
 
 const fastify = Fastify({
@@ -14,7 +14,9 @@ const fastify = Fastify({
 });
 
 new DataBase().createTables()
-new User().checkSuperUser()
+// superuser потрібен лише для авторизації на rozklad.ztu.edu.ua, яка наразі не потрібна.
+// Розкоментувати разом з авторизацією в RozkladRequest.
+// new User().checkSuperUser()
 
 fastify.register(NewUserRoute);
 fastify.register(GroupRoute);

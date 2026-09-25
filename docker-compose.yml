@@ -3,8 +3,11 @@ services:
     container_name: parser
     build: ./
     restart: always
+    # node як PID 1 ігнорує SIGTERM — init передає сигнали й коректно зупиняє контейнер
+    init: true
+    # uid:gid власника ./src/data на хості (за замовчуванням 1000:1000, як у користувача node)
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
     ports:
       - 8080:8080
     volumes:
       - ./src/data:/app/data
-    
