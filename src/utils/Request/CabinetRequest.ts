@@ -6,6 +6,7 @@ import { User } from '../../models/User';
 
 export class CabinetRequest {
     private loginUrl: string = 'https://cabinet.ztu.edu.ua/site/login';
+    private baseUrl: string = 'https://cabinet.ztu.edu.ua/site/schedule';
 
     private attempts: number = 0;
     private allowAttempts: number = 2;
@@ -19,8 +20,7 @@ export class CabinetRequest {
     }
 
     async request(url?: string): Promise<string> {
-        const baseUrl = `https://cabinet.ztu.edu.ua/site/schedule`
-        const myurl = (url) ? url : baseUrl
+        const myurl = (url) ? url : this.baseUrl
 
         const { name, password, tokenCabinet } = this.db.getDataOfNameUser(this.username)
 
@@ -68,35 +68,51 @@ export class CabinetRequest {
         password: string,
     ): Promise<string> {
 
-        const csrf = await this.getCsrfToken()
-        if (csrf['token'] && csrf['cookie']) {
+        const cookieValue = await this.login(username, password);
 
-            const formData = this.getFormData(username, password, csrf['token']);
-
-            const response = await request(this.loginUrl, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    Cookie: csrf['cookie']
-                }
-            });
-
-            const rawCookies: string | string[] | undefined = response.headers['set-cookie'];
-            const cookieValue = this.getCookie(rawCookies);
-
-            if (cookieValue) {
-                return await this.connectToken(
-                    url,
-                    username,
-                    password,
-                    cookieValue,
-                );
-            }
-
-            return '1';
+        if (cookieValue) {
+            return await this.connectToken(
+                url,
+                username,
+                password,
+                cookieValue,
+            );
         }
 
-        return 'ти дебіл'
+        return 'Unable to log in to cabinet';
+    }
+
+    public async validate(username: string, password: string): Promise<boolean> {
+        const cookieValue = await this.login(username, password);
+        if (!cookieValue) return false
+
+        const { statusCode, body } = await request(this.baseUrl, {
+            method: 'GET',
+            headers: {
+                Cookie: cookieValue
+            }
+        });
+
+        return this.checkSuccessfulConnect(statusCode, await body.text());
+    }
+
+    private async login(username: string, password: string): Promise<string | undefined> {
+        const csrf = await this.getCsrfToken()
+        if (!csrf['token'] || !csrf['cookie']) return undefined
+
+        const formData = this.getFormData(username, password, csrf['token']);
+
+        const response = await request(this.loginUrl, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                Cookie: csrf['cookie']
+            }
+        });
+        await response.body.dump();
+
+        const rawCookies: string | string[] | undefined = response.headers['set-cookie'];
+        return this.getCookie(rawCookies);
     }
 
 
