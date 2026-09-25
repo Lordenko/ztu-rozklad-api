@@ -1,18 +1,19 @@
 import * as cheerio from 'cheerio';
 
 import { RozkladValidate } from '../../classes/Validate/RozkladValidate';
-import { WeekDay } from '../../classes/type/WeekDay';
 import { ScheduleData, Lesson } from '../../classes/type/ScheduleData';
 
 export class RozkladFetch {
-    private getSubject(pair: any): string {
-        return pair.find('.subject').text().trim();
+    private getSubject($: any, pair: any): string {
+        const subject = pair.find('.sch-subject').clone();
+        subject.find('.sch-subgroup').remove();
+        return subject.text().trim();
     }
 
     private getTeacher($: any, pair: any): string[] {
         const teachers: string[] = [];
 
-        pair.find('.teacher a').each((_: number, teacher: any) => {
+        pair.find('.sch-teachers a').each((_: number, teacher: any) => {
             teachers.push($(teacher).text().trim());
         });
 
@@ -22,13 +23,11 @@ export class RozkladFetch {
     private getRoom($: any, pair: any): string[] {
         const rooms: string[] = [];
 
-        pair.find('.room')
-            .find('a')
-            .each((_: number, room: any) => {
-                room = $(room).text().trim()
-                room = (String(room).includes('Дист')) ? 'Дистанційно' : room
-                rooms.push(room);
-            });
+        pair.find('.sch-room a').each((_: number, room: any) => {
+            room = $(room).text().trim()
+            room = (String(room).includes('Дист')) ? 'Дистанційно' : room
+            rooms.push(room);
+        });
 
         return rooms;
     }
@@ -36,27 +35,22 @@ export class RozkladFetch {
     private getGroup($: any, pair: any): string[] {
         const groups: string[] = [];
 
-        const flowGroups = pair.find('.flow-groups');
-
-        if (flowGroups) {
-            flowGroups.find('a').each((_: number, group: any) => {
-                groups.push($(group).text().trim());
-            });
-        } else {
-            return ['error'];
-        }
+        pair.find('.sch-flow a').each((_: number, group: any) => {
+            groups.push($(group).text().trim());
+        });
 
         return groups;
     }
 
     private getSubGroup(pair: any): string {
-        const subGroup = pair.find('.subgroup');
-        if (subGroup) {
-            if (subGroup.text().includes('1')) {
-                return '1';
-            } else if (subGroup.text().includes('2')) {
-                return '2';
-            }
+        // .sch-subgroup всередині .sch-subject — підгрупа,
+        // .sch-subgroup.sch-flow-no у .sch-meta-line — потік вибіркової дисципліни
+        const subGroupText: string = pair.find('.sch-subject .sch-subgroup').text();
+
+        if (subGroupText.includes('1')) {
+            return '1';
+        } else if (subGroupText.includes('2')) {
+            return '2';
         }
 
         return 'all';
@@ -64,8 +58,8 @@ export class RozkladFetch {
 
     private getClasses(pair: any): string {
         const regex = '^(Практичне|Лабораторна|Лекція)';
-        const activityTagText: string = pair.find('div.activity-tag').text().trim();
-        const match: RegExpMatchArray | null = activityTagText.match(regex);
+        const kindText: string = pair.find('.sch-kind').text().trim();
+        const match: RegExpMatchArray | null = kindText.match(regex);
         if (match) {
             return match[0];
         }
@@ -73,12 +67,24 @@ export class RozkladFetch {
         return 'error';
     }
 
+    private getDayNames($: any, table: any): string[] {
+        const dayNames: string[] = [];
+
+        table.find('thead th.sch-day-name').each((_: number, th: any) => {
+            const dayName = $(th).clone();
+            dayName.children().remove();
+            dayNames.push(dayName.text().trim());
+        });
+
+        return dayNames;
+    }
+
     private createValadate(
         $: any,
         pair: any,
         ordinality: any,
     ) {
-        const subject = this.getSubject(pair);
+        const subject = this.getSubject($, pair);
         const teacher = this.getTeacher($, pair);
         const room = this.getRoom($, pair);
         const group = this.getGroup($, pair);
@@ -108,8 +114,6 @@ export class RozkladFetch {
             data[weekName][dayName] ??= {};
             data[weekName][dayName][hour] ??= [];
 
-            // data[weekName][dayName][hour].push(validate.toDictionary());
-
             const isDuplicate = data[weekName][dayName][hour].some((lesson: Lesson) => {
                 if (lesson.subject !== validate.subject) return false;
 
@@ -133,68 +137,54 @@ export class RozkladFetch {
         const $ = cheerio.load(html);
 
         const data: ScheduleData = {};
-        const selectiveDays: any[] = [];
+        const selectiveDays: string[] = [];
 
-        const weekDay = new WeekDay()
+        // .sch-days — дубль розкладу для мобільної версії, беремо тільки таблицю
+        $('section.sch-week').each((_, week) => {
+            const weekName = $(week).find('.sch-week-title').text().trim();
+            const table = $(week).find('table.sch-table');
+            const dayNames = this.getDayNames($, table);
 
-        $('.wrapper').each((_, wrapper) => {
-            const weekName = $(wrapper).find('h2').text().trim();
+            table.find('tbody tr').each((_, tr) => {
+                const hour = $(tr).find('th.sch-hour .sch-hour-time').text().trim();
+                const ordinality = $(tr).find('th.sch-hour .sch-hour-num').text().trim();
 
-            $(wrapper)
-                .find('tr')
-                .each((_, tr) => {
-                    const hour = $(tr)
-                        .find('th.hour-name>div.full-name')
-                        .text()
-                        .trim();
-                    const ordinality = $(tr)
-                        .find('th.hour-name>div.name')
-                        .text()
-                        .trim();
+                $(tr)
+                    .find('td.sch-cell')
+                    .each((tdKey, td) => {
+                        if ($(td).hasClass('is-free')) return;
 
-                    $(tr)
-                        .find('td')
-                        .each((tdKey, td) => {
-                            if ($(td).find("*").length > 0) {
-                                this.checkDayInData(
-                                    data,
-                                    weekName,
+                        this.checkDayInData(data, weekName);
+
+                        const dayName = dayNames[tdKey];
+
+                        // вибіркові дисципліни явно згруповані в <details class="sch-many">
+                        if ($(td).find('.sch-many').length > 0) {
+                            const dayText = `${weekName}, ${dayName}`
+                            if (!selectiveDays.includes(dayText)) {
+                                selectiveDays.push(dayText)
+                            }
+                        }
+
+                        $(td)
+                            .find('.sch-pair:not(.is-placeholder)')
+                            .each((_, pair) => {
+                                const validate = this.createValadate(
+                                    $,
+                                    $(pair),
+                                    ordinality,
                                 );
 
-                                const pairs = $(td).find('div.pair');
-                                pairs.each((pairKey, pair) => {
-                                    const $pair = $(pair);
-
-                                    const dayName = weekDay.stringName(tdKey)
-
-                                    if (pairs.length > 2) {
-                                        const dayText = `${weekName}, ${dayName}`
-                                        if (!selectiveDays.includes(dayText)) {
-                                            selectiveDays.push(dayText)
-                                        }
-                                    }
-
-                                    if (pair) {
-                                        const validate = this.createValadate(
-                                            $,
-                                            $pair,
-                                            ordinality,
-                                        );
-
-                                        this.updateData(
-                                            data,
-                                            weekName,
-                                            dayName,
-                                            hour,
-                                            validate
-                                        );
-                                    }
-                                });
-                            }
-
-
-                        });
-                });
+                                this.updateData(
+                                    data,
+                                    weekName,
+                                    dayName,
+                                    hour,
+                                    validate
+                                );
+                            });
+                    });
+            });
         });
 
         return {
@@ -205,5 +195,3 @@ export class RozkladFetch {
 
 
 }
-
-

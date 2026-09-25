@@ -11,10 +11,10 @@ import { ScheduleData } from '../classes/type/ScheduleData';
 import { Lesson } from '../classes/type/ScheduleData';
 
 export async function fetchGroup(id: number, username?: string) {
-    const name = username ?? new User().getNameOfSuperUser();
-    console.log(name);
-
-    if (!name) return { message: 'SuperUser is corrupted or does not exist!' };
+    // Авторизація на rozklad.ztu.edu.ua наразі не потрібна, тому superuser не обов'язковий.
+    // Розкоментувати, якщо авторизацію повернуть (див. RozkladRequest).
+    // const superUserName = username ?? new User().getNameOfSuperUser();
+    // if (!superUserName) return { message: 'SuperUser is corrupted or does not exist!' };
 
     const status = username ? 'super' : 'common'
 
@@ -35,7 +35,7 @@ export async function fetchGroup(id: number, username?: string) {
     }
 
 
-    const cabinetRequest = new CabinetRequest(name);
+    const cabinetRequest = new CabinetRequest(username as string);
     const cabinetFetch = new CabinetFetch(cabinetRequest);
     const cabinetJson = await cabinetFetch.fetch();
 

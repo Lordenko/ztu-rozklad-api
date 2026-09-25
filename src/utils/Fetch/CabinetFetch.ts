@@ -23,7 +23,7 @@ export class CabinetFetch {
             const weekName = this.getWeekName($)
             const dayName = this.getDayName($)
 
-            $('.pair').each((_, pair) => {
+            $('.sch-pair').each((_, pair) => {
                 if (pair) {
                     const hour = this.getHour($, pair);
                     const validate = this.createValidate($, pair)
@@ -55,52 +55,50 @@ export class CabinetFetch {
     }
 
     private getDescription($: any, pair: any): string | undefined {
-        const div = $(pair).find('div')[9];
-        let text: string = $(div).text();
-        text = text.replace(/\s+/g, ' ').trim()
-        return (text.includes('Викладач ще не надав інформацію')) ? undefined : text;
+        // якщо викладач не надав інформацію, замість .sch-link буде .sch-nolink
+        const link = $(pair).find('.sch-link');
+        if (link.length === 0) return undefined;
+
+        return link.text().replace(/\s+/g, ' ').trim();
     }
 
 
     private getSubject($: any, pair: any): string {
-        return $($(pair).find('.date>.type')[0]).text().trim();
+        return $(pair).find('.sch-subject').text().trim();
     }
 
     private getTeacher($: any, pair: any): string[] {
-        const teachersText: string = $($(pair).find('.date>.type')[4]).text().trim()
+        const teachersText: string = $(pair).find('.sch-teacher').text().trim()
         return teachersText.split(', ')
     }
 
     private getRoom($: any, pair: any): string[] {
-        const roomsText = $($(pair).find('.date>.type')[3]).text();
+        const roomsText: string = $(pair).find('.sch-chip-room').text();
         return roomsText
+            .replace(/^\s*ауд\.\s*/, '')
             .split(' / ')
             .map((room: string) => room.replace(/\s+/g, ' ').trim())
-            .map((room: string) => (room.includes('Дист') ? room = 'Дистанційно' : room = room))
+            .map((room: string) => (room.includes('Дист') ? 'Дистанційно' : room))
             .filter(Boolean);
     }
 
 
     private getDayName($: any): string {
-        return this.capitalizeFirstLetter($('.active>a').last().text().trim())
-    }
-
-    private capitalizeFirstLetter(val: string) {
-        return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+        return $('.sch-bar-day').text().trim()
     }
 
     private getHour($: any, pair: any): string {
-        return $(pair).find('.date>.time').text().trim();
+        return $(pair).find('.sch-time .sch-hh').text().trim();
     }
 
     private getWeekName($: any): string {
-        const weekTagNumber = $('.active>a').first().text().trim()
-        const weekNumber = weekTagNumber == 0 ? weekTagNumber : ($('.page-item.active>a').first().text().trim() % 2) === 0 ? 2 : 1
-        return `Тиждень ${weekNumber}`
+        const weekNumber = this.getWeekNumber($)
+        const weekName = weekNumber === 0 ? 0 : (weekNumber % 2 === 0 ? 2 : 1)
+        return `Тиждень ${weekName}`
     }
 
     private getWeekNumber($: any): number {
-        return parseInt($('.active>a').first().text().trim())
+        return parseInt($('a.sch-week.is-active').first().text().trim())
     }
 
     private async getActualWeekNumber(): Promise<number> {
