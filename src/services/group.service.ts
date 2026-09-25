@@ -42,53 +42,63 @@ export async function fetchGroup(id: number, username?: string) {
 
 
     const resultJson = getResultJson(rozkladJson, cabinetJson);
+    const userSelectiveDays = getUserSelectiveDays(resultJson, cabinetJson, selectiveDays);
 
-    const data = { data: resultJson, selectiveDays };
+    const data = { data: resultJson, selectiveDays: userSelectiveDays };
     cacheModel.insert(id, data, status, username)
     return data;
 }
 
 
+function isSameLesson(rozkladLesson: Lesson, cabinetLesson: Lesson): boolean {
+    return (
+        rozkladLesson.subject === cabinetLesson.subject &&
+        JSON.stringify(rozkladLesson.teacher) === JSON.stringify(cabinetLesson.teacher) &&
+        JSON.stringify(rozkladLesson.room) === JSON.stringify(cabinetLesson.room)
+    );
+}
+
 function getResultJson(rozkladJson: ScheduleData, cabinetJson: ScheduleData) {
-    Object.entries(cabinetJson).forEach(([week, weekData]) => {
+    // cabinetJson містить лише пари користувача (включно з його вибірковими)
+    // і лише за перевірені тижні — решту тижнів лишаємо без змін
+    Object.keys(cabinetJson).forEach((week) => {
         if (!rozkladJson[week]) {
             console.warn(`Пропущено тиждень ${week} - немає в розкладі`);
             return;
         }
 
-        Object.entries(weekData).forEach(([day, dayData]) => {
-            if (!rozkladJson[week][day]) {
-                console.warn(`Пропущено день ${day} у тижні ${week} - немає в розкладі`);
-                return;
-            }
-
+        Object.entries(rozkladJson[week]).forEach(([day, dayData]) => {
             Object.entries(dayData).forEach(([hour, hourData]) => {
-                if (!rozkladJson[week][day][hour]) {
-                    console.warn(`Пропущено годину ${hour} у ${day}, тиждень ${week} - немає в розкладі`);
-                    return;
-                }
+                const cabinetLessons = cabinetJson[week][day]?.[hour] ?? [];
 
-                hourData.forEach((lesson: Lesson) => {
-                    const hourDataRozklad = rozkladJson[week][day][hour];
+                const lessons = hourData.filter((rozkladLesson: Lesson) => {
+                    const cabinetLesson = cabinetLessons.find((lesson: Lesson) => isSameLesson(rozkladLesson, lesson));
 
-                    hourDataRozklad.forEach((rozkladLesson: Lesson, rozkladLessonIndex: number) => {
-                        // console.log(rozkladLesson.subject + '  ' + lesson.subject);
-                        // console.log(JSON.stringify(rozkladLesson.teacher) + '  ' + JSON.stringify(lesson.teacher));
-                        // console.log(JSON.stringify(rozkladLesson.room) + '  ' + JSON.stringify(lesson.room));
+                    if (cabinetLesson?.description !== undefined) {
+                        rozkladLesson.description = cabinetLesson.description;
+                    }
 
-                        if (
-                            rozkladLesson.subject === lesson.subject &&
-                            JSON.stringify(rozkladLesson.teacher) === JSON.stringify(lesson.teacher) &&
-                            JSON.stringify(rozkladLesson.room) === JSON.stringify(lesson.room)
-                        ) {
-
-                            rozkladJson[week][day][hour][rozkladLessonIndex].description = lesson.description;
-                        }
-                    });
+                    // вибіркові, яких немає в кабінеті користувача, він не обирав
+                    return !rozkladLesson.selective || cabinetLesson !== undefined;
                 });
+
+                if (lessons.length > 0) dayData[hour] = lessons;
+                else delete dayData[hour];
             });
+
+            if (Object.keys(dayData).length === 0) delete rozkladJson[week][day];
         });
     });
 
     return rozkladJson;
+}
+
+function getUserSelectiveDays(resultJson: ScheduleData, cabinetJson: ScheduleData, selectiveDays: string[]): string[] {
+    return selectiveDays.filter((dayText: string) => {
+        const [week, day] = dayText.split(', ');
+        if (!(week in cabinetJson)) return true;
+
+        return Object.values(resultJson[week]?.[day] ?? {})
+            .some((lessons: Lesson[]) => lessons.some((lesson: Lesson) => lesson.selective));
+    });
 }

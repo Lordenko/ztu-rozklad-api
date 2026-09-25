@@ -16,7 +16,6 @@ export class CabinetValidate {
             this.subject,
             this.teacher,
             this.room,
-            this.description,
         ].every((value) => value !== null && value !== undefined);
     }
 

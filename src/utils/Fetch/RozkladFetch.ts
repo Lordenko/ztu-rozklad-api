@@ -83,6 +83,7 @@ export class RozkladFetch {
         $: any,
         pair: any,
         ordinality: any,
+        selective: boolean,
     ) {
         const subject = this.getSubject($, pair);
         const teacher = this.getTeacher($, pair);
@@ -99,6 +100,7 @@ export class RozkladFetch {
             group,
             subgroup,
             classes,
+            selective,
         );
     }
 
@@ -159,7 +161,8 @@ export class RozkladFetch {
                         const dayName = dayNames[tdKey];
 
                         // вибіркові дисципліни явно згруповані в <details class="sch-many">
-                        if ($(td).find('.sch-many').length > 0) {
+                        const selective = $(td).find('.sch-many').length > 0;
+                        if (selective) {
                             const dayText = `${weekName}, ${dayName}`
                             if (!selectiveDays.includes(dayText)) {
                                 selectiveDays.push(dayText)
@@ -173,6 +176,7 @@ export class RozkladFetch {
                                     $,
                                     $(pair),
                                     ordinality,
+                                    selective,
                                 );
 
                                 this.updateData(

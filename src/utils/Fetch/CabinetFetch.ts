@@ -20,10 +20,17 @@ export class CabinetFetch {
             const html = await this.cabinetRequest.request(url)
             const $ = cheerio.load(html)
 
+            // не сторінка розкладу (напр. не вдалося увійти) — тиждень не вважаємо перевіреним
+            if ($('.sch-bar-day').length === 0) continue
+
             const weekName = this.getWeekName($)
             const dayName = this.getDayName($)
 
-            $('.sch-pair').each((_, pair) => {
+            // тиждень позначаємо як перевірений, навіть якщо пар немає
+            data[weekName] ??= {};
+
+            // .sch-rest — вибіркові потоку, які користувач не обирав
+            $('.sch-pair').not('.sch-rest .sch-pair').each((_, pair) => {
                 if (pair) {
                     const hour = this.getHour($, pair);
                     const validate = this.createValidate($, pair)

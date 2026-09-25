@@ -6,8 +6,9 @@ export class RozkladValidate {
     group: string[]
     subgroup: string
     classes: string
+    selective: boolean
 
-    constructor(ordinality: string, subject: string, teacher: string[], room: string[], group: string[], subgroup: string, classes: string) {
+    constructor(ordinality: string, subject: string, teacher: string[], room: string[], group: string[], subgroup: string, classes: string, selective: boolean) {
         this.ordinality = ordinality
         this.subject = subject
         this.teacher = teacher
@@ -15,6 +16,7 @@ export class RozkladValidate {
         this.group = group
         this.subgroup = subgroup
         this.classes = classes
+        this.selective = selective
     }
 
     checkIsValid(): boolean {
@@ -37,7 +39,8 @@ export class RozkladValidate {
             'room': this.room,
             'group': this.group,
             'subgroup': this.subgroup,
-            'classes': this.classes
+            'classes': this.classes,
+            'selective': this.selective
         }
     }
 }

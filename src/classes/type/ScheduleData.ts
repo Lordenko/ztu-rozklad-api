@@ -6,6 +6,7 @@ export type Lesson = {
     group?: string[];
     subgroup?: string;
     classes?: string;
+    selective?: boolean;
     [key: string]: any;
 };
 
