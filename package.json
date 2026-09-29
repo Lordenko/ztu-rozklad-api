@@ -6,7 +6,8 @@
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "start": "tsc -p tsconfig.json && node ./dist/main.js",
-        "clear-table": "ts-node ./scripts/clearCache.ts"
+        "clear-table": "ts-node ./scripts/clearCache.ts",
+        "clear-cache": "sh ./scripts/clear-cache.sh"
     },
     "repository": {
         "type": "git",
