@@ -28,6 +28,7 @@ ENV NODE_ENV=production
 COPY package.json ./
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+COPY ./scripts ./scripts
 
 # DataBase зберігає sqlite у process.cwd()/data.
 # Папка має належати користувачу, від якого працює контейнер (node, uid 1000)
