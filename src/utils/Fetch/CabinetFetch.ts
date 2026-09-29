@@ -121,7 +121,7 @@ export class CabinetFetch {
 
     private getWeekName($: any): string {
         const weekNumber = this.getWeekNumber($)
-        const weekName = weekNumber === 0 ? 0 : (weekNumber % 2 === 0 ? 2 : 1)
+        const weekName = weekNumber === 0 ? 0 : (weekNumber % 2 === 0 ? 1 : 2)
         return `Тиждень ${weekName}`
     }
 
