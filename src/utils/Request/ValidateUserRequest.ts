@@ -1,34 +1,14 @@
 import { CabinetRequest } from './CabinetRequest';
-
-// Раніше дані входу перевірялися через rozklad.ztu.edu.ua (код нижче закоментовано).
-// Тепер перевірка йде через cabinet.ztu.edu.ua.
-
-// import { request, FormData } from 'undici';
+import { RozkladRequest } from './RozkladRequest';
 
 export class ValidateUserRequest {
-    // private loginUrl: string = 'https://rozklad.ztu.edu.ua/schedule/users/login';
+    // superuser — обліковий запис rozklad.ztu.edu.ua, від імені якого завантажується розклад;
+    // user — обліковий запис cabinet.ztu.edu.ua
+    async request(type: string, username: string, password: string): Promise<boolean> {
+        if (type === 'superuser') {
+            return await new RozkladRequest().validate(username, password);
+        }
 
-    async request(username: string, password: string): Promise<boolean> {
         return await new CabinetRequest(username).validate(username, password);
-
-        // const formData = this.getFormData(username, password);
-
-        // const { body, statusCode } = await request(this.loginUrl, {
-        //     method: 'POST',
-        //     body: formData,
-        // });
-
-        // if (statusCode >= 300 && statusCode <= 399) return true
-        // else return false
     }
-
-    // private getFormData(
-    //     username: string,
-    //     password: string
-    // ): FormData {
-    //     const formData = new FormData();
-    //     formData.append('login', username);
-    //     formData.append('password', password);
-    //     return formData;
-    // }
 }

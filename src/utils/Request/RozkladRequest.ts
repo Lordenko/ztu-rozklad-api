@@ -1,133 +1,141 @@
-import { request } from 'undici';
-
-// Авторизація на rozklad.ztu.edu.ua наразі не потрібна.
-// Код авторизації збережено нижче (закоментовано) на випадок, якщо її повернуть.
-// Для повернення: розкоментувати імпорти, поля, конструктор та методи,
-// а в request() викликати connectToken() замість простого запиту.
-
-// import { request, FormData } from 'undici';
-// import { User } from '../../models/User';
+import { request, FormData } from 'undici';
+import { User } from '../../models/User';
 
 export class RozkladRequest {
-    // private loginUrl: string = 'https://rozklad.ztu.edu.ua/schedule/users/login';
+    private loginUrl: string = 'https://rozklad.ztu.edu.ua/schedule/users/login';
 
-    // private attempts: number = 0;
-    // private allowAttempts: number = 2;
+    private attempts: number = 0;
+    private allowAttempts: number = 2;
 
-    // private db: User
+    private db: User
 
-    // constructor() {
-    //     this.db = new User()
-    // }
+    constructor() {
+        this.db = new User()
+    }
 
     public async request(
         id: number
     ): Promise<string> {
-        const url = `https://rozklad.ztu.edu.ua/schedule/group?id=${id}`;
-
-        const { body } = await request(url);
-        return await body.text();
-
-        // const userData = this.db.getDataOfNameSuperUser()
-        // console.log(`userdata = ${userData}`);
-
-        // return await this.connectToken(url, userData.name, userData.password, userData.tokenRozklad);
+        return await this.requestUrl(`https://rozklad.ztu.edu.ua/schedule/group?id=${id}`);
     }
 
-    // private async connectToken(
-    //     url: string,
-    //     userName: string,
-    //     password: string,
-    //     tokenValue?: string | null,
-    // ): Promise<string> {
-    //     const cookieName = 'PHPSESSID';
-    //     const cookie = `${cookieName}=${tokenValue}`;
+    // будь-яка сторінка rozklad (розклад групи, список груп) доступна лише після входу
+    public async requestUrl(url: string): Promise<string> {
+        const userData = this.db.getDataOfNameSuperUser()
 
-    //     if (this.attempt()) {
+        if (!userData) {
+            const errorText = 'Rozklad requires auth, but superuser does not exist';
+            console.log(errorText);
+            return errorText;
+        }
 
-    //         const { statusCode, body } = await request(url, {
-    //             headers: {
-    //                 Cookie: cookie,
-    //             },
-    //         });
+        return await this.connectToken(url, userData.name, userData.password, userData.tokenRozklad);
+    }
 
-    //         if (statusCode > 299 && statusCode < 400) {
-    //             console.log(`Unsuccessful attempt to rozklad #${this.attempts} (${userName})`);
-    //             return await this.connectPassword(userName, password, url);
-    //         } else {
-    //             console.log(`Successful attempt to rozklad (${userName})`);
-    //             this.db.updateData(userName, undefined, tokenValue)
-    //             return body.text();
-    //         }
-    //     } else {
-    //         const errorText = `Attempts are over of auth (${userName})`;
-    //         console.log(errorText);
-    //         return errorText;
-    //     }
-    // }
+    public async validate(username: string, password: string): Promise<boolean> {
+        const response = await request(this.loginUrl, {
+            method: 'POST',
+            body: this.getFormData(username, password),
+        });
+        await response.body.dump();
 
-    // private async connectPassword(
-    //     username: string,
-    //     password: string,
-    //     url: string,
-    // ): Promise<string> {
-    //     const formData = this.getFormData(username, password);
+        // успішний вхід — переадресація, невдалий — знову сторінка входу (200)
+        return response.statusCode >= 300 && response.statusCode <= 399;
+    }
 
-    //     const response = await request(this.loginUrl, {
-    //         method: 'POST',
-    //         body: formData,
-    //     });
+    private async connectToken(
+        url: string,
+        userName: string,
+        password: string,
+        tokenValue?: string | null,
+    ): Promise<string> {
+        const cookieName = 'PHPSESSID';
+        const cookie = `${cookieName}=${tokenValue}`;
 
-    //     const rawCookies: string | string[] | undefined =
-    //         response.headers['set-cookie'];
-    //     const cookieValue = this.getCookie(rawCookies);
+        if (this.attempt()) {
 
-    //     if (cookieValue) {
-    //         return await this.connectToken(
-    //             url,
-    //             username,
-    //             password,
-    //             cookieValue,
-    //         );
-    //     }
+            const { statusCode, body } = await request(url, {
+                headers: {
+                    Cookie: cookie,
+                },
+            });
 
-    //     return await response.body.text();
-    // }
+            // без входу rozklad переадресовує на сторінку входу
+            if (statusCode > 299 && statusCode < 400) {
+                await body.dump();
+                console.log(`Unsuccessful attempt to rozklad #${this.attempts} (${userName})`);
+                return await this.connectPassword(userName, password, url);
+            } else {
+                console.log(`Successful attempt to rozklad (${userName})`);
+                this.db.updateData(userName, undefined, tokenValue)
+                return body.text();
+            }
+        } else {
+            const errorText = `Attempts are over of auth (${userName})`;
+            console.log(errorText);
+            return errorText;
+        }
+    }
 
-    // private getCookie(
-    //     rawCookies: string | string[] | undefined,
-    // ): string | undefined {
-    //     if (rawCookies) {
-    //         if (typeof rawCookies === 'string') {
-    //             let cookies = rawCookies.split(';');
-    //             cookies = cookies.filter((cookie) =>
-    //                 cookie.includes('PHPSESSID'),
-    //             ) as string[];
-    //             cookies = cookies[0].split('=');
+    private async connectPassword(
+        username: string,
+        password: string,
+        url: string,
+    ): Promise<string> {
+        const formData = this.getFormData(username, password);
 
-    //             const cookieValue = cookies[1];
+        const response = await request(this.loginUrl, {
+            method: 'POST',
+            body: formData,
+        });
 
-    //             return cookieValue;
-    //         }
-    //     }
-    // }
+        const rawCookies: string | string[] | undefined =
+            response.headers['set-cookie'];
+        const cookieValue = this.getCookie(rawCookies);
 
-    // private getFormData(
-    //     username: string,
-    //     password: string
-    // ): FormData {
-    //     const formData = new FormData();
-    //     formData.append('login', username);
-    //     formData.append('password', password);
-    //     return formData;
-    // }
+        if (cookieValue) {
+            await response.body.dump();
+            return await this.connectToken(
+                url,
+                username,
+                password,
+                cookieValue,
+            );
+        }
 
-    // private attempt(): boolean {
-    //     if (this.attempts < this.allowAttempts) {
-    //         this.attempts++;
-    //         return true;
-    //     } else {
-    //         return false;
-    //     }
-    // }
+        return await response.body.text();
+    }
+
+    private getCookie(
+        rawCookies: string | string[] | undefined,
+    ): string | undefined {
+        if (!rawCookies) return undefined;
+
+        // undici віддає рядок для одного set-cookie і масив для кількох
+        const cookies = Array.isArray(rawCookies) ? rawCookies : [rawCookies];
+        const sessionCookie = cookies
+            .map((cookie) => cookie.split(';')[0].trim())
+            .find((cookie) => cookie.startsWith('PHPSESSID='));
+
+        return sessionCookie?.split('=')[1];
+    }
+
+    private getFormData(
+        username: string,
+        password: string
+    ): FormData {
+        const formData = new FormData();
+        formData.append('login', username);
+        formData.append('password', password);
+        return formData;
+    }
+
+    private attempt(): boolean {
+        if (this.attempts < this.allowAttempts) {
+            this.attempts++;
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

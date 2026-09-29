@@ -11,17 +11,15 @@ import { ScheduleData } from '../classes/type/ScheduleData';
 import { Lesson } from '../classes/type/ScheduleData';
 
 export async function fetchGroup(id: number, username?: string) {
-    // Авторизація на rozklad.ztu.edu.ua наразі не потрібна, тому superuser не обов'язковий.
-    // Розкоментувати, якщо авторизацію повернуть (див. RozkladRequest).
-    // const superUserName = username ?? new User().getNameOfSuperUser();
-    // if (!superUserName) return { message: 'SuperUser is corrupted or does not exist!' };
-
     const status = username ? 'super' : 'common'
 
     // вибіркові для 'super' залежать від користувача, тому кеш окремий для кожного
     const cacheModel = new Cache()
     const cacheData = cacheModel.getDataByGroup(id, username)
     if (cacheData) return cacheData
+
+    // rozklad.ztu.edu.ua доступний лише після входу, який виконується від імені superuser
+    if (!new User().getNameOfSuperUser()) return { message: 'SuperUser is corrupted or does not exist!' };
 
     // rozklad і cabinet не залежать одне від одного — завантажуємо паралельно
     const [{ data: rozkladJson, selectiveDays }, cabinetJson] = await Promise.all([
