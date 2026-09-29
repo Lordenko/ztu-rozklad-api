@@ -4,9 +4,9 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "build": "tsc -p tsconfig.json",
-        "start": "tsc -p tsconfig.json && node ./dist/main.js",
-        "clear-table": "ts-node ./scripts/clearCache.ts"
+        "build": "tsc -p tsconfig.json && tsc scripts/clearCache.ts --outDir dist/scripts --target es2016 --module commonjs --esModuleInterop --strict --skipLibCheck",
+        "start": "npm run build && node ./dist/main.js",
+        "clear-table": "node ./dist/scripts/clearCache.js"
     },
     "repository": {
         "type": "git",

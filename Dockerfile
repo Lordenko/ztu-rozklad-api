@@ -8,6 +8,7 @@ RUN npm ci
 
 COPY tsconfig.json ./
 COPY src ./src
+COPY scripts ./scripts
 RUN npm run build
 
 # ---- deps: лише production-залежності ----
@@ -28,7 +29,6 @@ ENV NODE_ENV=production
 COPY package.json ./
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
-COPY ./scripts ./scripts
 
 # DataBase зберігає sqlite у process.cwd()/data.
 # Папка має належати користувачу, від якого працює контейнер (node, uid 1000)
